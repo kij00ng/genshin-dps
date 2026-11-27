@@ -1340,7 +1340,7 @@ function sane(m) {
   if (!(m.cons >= 0 && m.cons <= 6)) m.cons = 0;
   // 예전 버전의 'gcsim 최적화'(opt)는 최적화 버튼이 없어져 다시 돌릴 방법이 없다 → 자동 최적화로 바꿔 장비가 바뀌면 다시 맞춘다
   if (!m.subsSrc || m.subsSrc === 'opt') m.subsSrc = m.subs ? 'auto' : 'default';
-  if (m.mainsAuto == null) m.mainsAuto = true;
+  m.mainsAuto = true;   // 계산하기를 누르면 주옵션도 항상 다시 고른다 (예전에 직접 고른 주옵션 잠금은 풀기)
   if (m.subsSrc === 'default') m.subs = null;
   return m;
 }
@@ -1357,7 +1357,7 @@ const save = () => { try { localStorage.setItem('gdps3', JSON.stringify(state));
 /* 사용자가 고르는 설정만 모은 서명. 계산은 "계산하기"를 눌러 이 서명이 승인(state.calcSig)됐을 때만 돈다
    (무기·성유물을 하나 바꿀 때마다 계산이 다시 시작되고, 계산이 끝나 화면을 다시 그리면 열어 둔 선택 목록이 닫혀서 불편했다).
    자동 최적화가 정하는 부옵션·주옵션(자동)과 페보니우스 자동 배정은 계산 결과라 서명에서 빼거나 계산이 끝난 뒤 다시 승인한다 */
-const inputSig = st => JSON.stringify([st.members.map(m => [m.gc, m.weapon, m.refine, m.sets, m.mainsAuto === false ? m.mains : null,
+const inputSig = st => JSON.stringify([st.members.map(m => [m.gc, m.weapon, m.refine, m.sets, m.mains,
   m.talents, m.cons, isAuto(m) ? null : m.subs]), st.rotMode, st.rotCustom, st.driver, st.field, st.enemyLv, st.res, st.particles,
   st.iters, st.duration, st.autoER]);
 const approveCalc = () => { state.calcSig = inputSig(state); };
@@ -1955,7 +1955,7 @@ window.setChar = (i, gc) => { state.adaptLow = false;
 window.setM = (i, k, v) => { state.members[i][k] = v; render(); };
 // 무기를 바꾸면 재련도 그 무기의 기본값으로 (5성 1단계, 4성 이하 5단계) — 이전 무기의 재련이 그대로 남지 않게
 window.setWeapon = (i, gc) => { const m = state.members[i]; m.weapon = gc; m.weaponSet = true; m.refine = WP[gc] && WP[gc].rarity >= 5 ? 1 : 5; render(); };
-window.setMain = (i, slot, v) => { const m = state.members[i]; m.mains[slot] = v; m.mainsAuto = false; if (isAuto(m)) { m.subs = null; m.subsSrc = 'default'; } else resetSubsIfCapped(i); render(); };
+window.setMain = (i, slot, v) => { const m = state.members[i]; m.mains[slot] = v; if (isAuto(m)) { m.subs = null; m.subsSrc = 'default'; } else resetSubsIfCapped(i); render(); };
 window.setTalent = (i, k, v) => { state.members[i].talents[k] = v; render(); };
 window.setSetMode = (i, v) => { const m = state.members[i]; m.sets = v === '4' ? [m.sets[0]] : [m.sets[0], m.sets[1] && m.sets[1] !== m.sets[0] ? m.sets[1] : 'gladiatorsfinale']; render(); };
 window.setSet = (i, j, v) => { state.members[i].sets[j] = v; render(); };
