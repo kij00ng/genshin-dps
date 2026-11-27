@@ -58,10 +58,39 @@ h1{font-size:17px;margin:0 0 2px;font-weight:650;letter-spacing:-.2px}
 .hero .meta{color:var(--tx2);font-size:12.5px}
 .hero .meta b{color:var(--tx);font-weight:600}
 
-/* 파티 카드: 넓은 화면은 항상 4칸(가로 4등분), 태블릿은 2칸(2×2), 휴대폰은 1칸 — 3+1로 끊기지 않게 */
-.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-@media (max-width:1099px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
-@media (max-width:639px){ .grid{grid-template-columns:minmax(0,1fr)} }
+/* 파티 카드: 캐릭터마다 가로로 긴 줄 하나 (위아래로 네 줄). 카드는 원소색, 왼쪽 일러스트, 오른쪽 설정 칸 */
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.card.mc{--el:#888;display:grid;grid-template-columns:168px minmax(0,1fr);padding:0;overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--el) 45%,var(--line));border-left:4px solid var(--el);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--el) 18%,var(--panel)) 0,var(--panel) 42%)}
+.mc .art{position:relative;background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--el) 55%,transparent),color-mix(in srgb,var(--el) 14%,var(--panel)) 72%);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-height:190px}
+.mc .art img{width:100%;max-width:168px;aspect-ratio:1;object-fit:contain;display:block;margin-top:auto}
+.mc .art .ph{font-size:56px;font-weight:700;color:color-mix(in srgb,var(--el) 70%,#fff);margin:auto}
+.mc .art .share{position:absolute;top:8px;left:8px;font-size:12px;font-weight:650;padding:2px 8px;border-radius:999px;
+  background:color-mix(in srgb,var(--panel) 75%,transparent);color:var(--tx)}
+.mc .body{padding:12px 14px;min-width:0}
+.mc .top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-bottom:8px}
+.mc .top select.who{font-weight:650;font-size:14.5px;width:auto;min-width:150px;max-width:260px}
+.mc .top .dps{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.mc .top .dps span{font-size:11.5px;color:var(--tx3);font-weight:400;margin-left:5px}
+.mc .top .slot{font-size:11.5px;color:var(--tx3);margin-left:auto;display:flex;align-items:center;gap:6px}
+.mc .fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:6px 10px}
+.mc .f > label{display:block;font-size:11px;color:var(--tx3);margin-bottom:2px}
+.mc .f .tri{display:flex;gap:4px}
+.mc .stats{display:flex;flex-wrap:wrap;gap:3px 14px;margin-top:9px;padding-top:8px;border-top:1px solid var(--line);font-size:11.5px}
+.mc .stats span b{font-weight:600;font-variant-numeric:tabular-nums;margin-left:4px}
+.mc .stats span{color:var(--tx3)} .mc .stats span b{color:var(--tx)}
+/* 휴대폰: 초상화를 카드 맨 위 띠로, 설정 칸은 두 줄씩 */
+@media (max-width:639px){
+  .card.mc{grid-template-columns:minmax(0,1fr)}
+  .mc .art{flex-direction:row;justify-content:flex-start;align-items:flex-end;min-height:0;height:96px;
+    background:linear-gradient(90deg,color-mix(in srgb,var(--el) 45%,var(--panel)),color-mix(in srgb,var(--el) 8%,var(--panel)))}
+  .mc .art img{width:96px;margin:0 0 0 8px}
+  .mc .art .ph{font-size:36px;margin:auto 0 auto 24px}
+  .mc .art .share{left:auto;right:8px}
+  .mc .fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 /* 화면 전환 단추 (파티 / 로테이션 / 설명) */
 .nav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
 .nav a{display:inline-block;padding:6px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--tx2);
@@ -1191,6 +1220,10 @@ const CH = Object.fromEntries(D.chars.filter(c => c.gc).map(c => [c.gc, c]));
 const WP = Object.fromEntries(D.weapons.map(w => [w.gc, w]));
 const ST = Object.fromEntries(D.sets.map(s => [s.gc, s]));
 
+/* 캐릭터 기본 초상화 (게임 내 이름). 그림은 HoYoverse의 것이며, 게임 그림을 모아 둔 enka.network에서 불러온다.
+   불러오지 못하면 원소색 바탕에 이름 첫 글자를 보여 준다. 여행자는 여행자(여) 초상화 */
+const ICON = {"aino":"Aino","albedo":"Albedo","alhaitham":"Alhatham","aloy":"Aloy","alyosha":"Alyosha","amber":"Ambor","aratakiitto":"Itto","arlecchino":"Arlecchino","baizhu":"Baizhuer","barbara":"Barbara","beidou":"Beidou","bennett":"Bennett","candace":"Candace","charlotte":"Charlotte","chasca":"Chasca","chevreuse":"Chevreuse","chiori":"Chiori","chongyun":"Chongyun","citlali":"Citlali","clorinde":"Clorinde","collei":"Collei","columbina":"Columbina","cyno":"Cyno","dahlia":"Dahlia","dehya":"Dehya","diluc":"Diluc","diona":"Diona","dori":"Dori","durin":"Durin","emilie":"Emilie","escoffier":"Escoffier","eula":"Eula","faruzan":"Faruzan","fischl":"Fischl","flins":"Flins","freminet":"Freminet","furina":"Furina","gaming":"Gaming","ganyu":"Ganyu","gorou":"Gorou","hutao":"Hutao","iansan":"Iansan","ifa":"Ifa","illuga":"Illuga","ineffa":"Ineffa","jahoda":"Jahoda","jean":"Qin","kachina":"Kachina","kaedeharakazuha":"Kazuha","kaeya":"Kaeya","kamisatoayaka":"Ayaka","kamisatoayato":"Ayato","kaveh":"Kaveh","keqing":"Keqing","kinich":"Kinich","kirara":"Momoka","klee":"Klee","kujousara":"Sara","kukishinobu":"Shinobu","lanyan":"Lanyan","lauma":"Lauma","layla":"Layla","linnea":"Linnea","lisa":"Lisa","lohen":"Lohen","lynette":"Linette","lyney":"Liney","mavuika":"Mavuika","mika":"Mika","mitya":"Mitya","mona":"Mona","mualani":"Mualani","nahida":"Nahida","navia":"Navia","nefer":"Nefer","neuvillette":"Neuvillette","nicole":"Nicole","nilou":"Nilou","ningguang":"Ningguang","noelle":"Noel","odette":"Odette","ororon":"Olorun","prune":"Prune","qiqi":"Qiqi","raidenshogun":"Shougun","razor":"Razor","rosaria":"Rosaria","sandrone":"MarionetteNew","sangonomiyakokomi":"Kokomi","sayu":"Sayu","sethos":"Sethos","shenhe":"Shenhe","shikanoinheizou":"Heizo","sigewinne":"Sigewinne","skirk":"SkirkNew","sucrose":"Sucrose","tartaglia":"Tartaglia","thoma":"Tohma","tighnari":"Tighnari","traveleranemo":"PlayerGirl","travelercryo":"PlayerGirl","travelerdendro":"PlayerGirl","travelerelectro":"PlayerGirl","travelergeo":"PlayerGirl","travelerhydro":"PlayerGirl","travelerpyro":"PlayerGirl","valeriy":"Valeriy","varesa":"Varesa","varka":"Varka","venti":"Venti","vesna":"Vesna","vodyanitsa":"Vodyanitsa","wanderer":"Wanderer","wriothesley":"Wriothesley","xiangling":"Xiangling","xianyun":"Liuyun","xiao":"Xiao","xilonen":"Xilonen","xingqiu":"Xingqiu","xinyan":"Xinyan","yaemiko":"Yae","yanfei":"Feiyan","yaoyao":"Yaoyao","yelan":"Yelan","yoimiya":"Yoimiya","yumemizukimizuki":"Mizuki","yunjin":"Yunjin","zhongli":"Zhongli","zibai":"Zibai"};
+const ART = gc => ICON[gc] ? 'https://enka.network/ui/UI_AvatarIcon_' + ICON[gc] + '.png' : null;
 const ELE = { pyro: ['불', '#ff8a65'], hydro: ['물', '#4fc3f7'], anemo: ['바람', '#80cbc4'], electro: ['번개', '#ba68c8'],
   dendro: ['풀', '#aed581'], cryo: ['얼음', '#80deea'], geo: ['바위', '#ffd54f'] };
 const ELE_ORDER = ['pyro', 'hydro', 'anemo', 'electro', 'dendro', 'cryo', 'geo'];
@@ -1759,32 +1792,37 @@ function memberCard(m, i, res, asm) {
   const opt = (list, cur) => list.map(k => `<option value="${k}" ${k === cur ? 'selected' : ''}>${STAT_KO[k]}</option>`).join('');
   const share = res ? res.per[i] / res.dps : null;
   const fs = res && res.stats && res.stats[i];
-  return `<div class="card" style="border-top:3px solid ${col}">
-    <h3><span class="el" style="background:${col}"></span>
-      <select style="font-weight:650;font-size:13.5px" onchange="setChar(${i},this.value)">${charOptions(m.gc)}</select>
-      <span class="pct">${share != null ? pc(share) : ''}</span></h3>
-    ${asm ? `<div class="row" style="justify-content:space-between;margin:4px 0 2px">
-      <span style="font-size:11px;color:var(--tx3)">${i + 1}번 칸 <button class="mini-btn" ${i === 0 ? 'disabled' : ''} onclick="moveSlot(${i},-1)">◀</button> <button class="mini-btn" ${i === 3 ? 'disabled' : ''} onclick="moveSlot(${i},1)">▶</button></span>
-      <label style="font-size:11.5px;color:${state.driver === i ? 'var(--hydro)' : 'var(--tx2)'}"><input type="radio" name="drv" ${state.driver === i ? 'checked' : ''} onchange="setCfg('driver',${i})"> 메인 딜러</label>
-    </div>` : ''}
-    <div class="dpsline">${res ? fmt(res.per[i]) : '—'}<span>DPS</span></div>
-    <div class="row"><label>무기</label><select onchange="setWeapon(${i},this.value)">${weapons.map(w =>
-      `<option value="${w.gc}" ${w.gc === m.weapon ? 'selected' : ''}>${esc(w.ko)}</option>`).join('')}</select></div>
-    <div class="row"><label>재련</label><select onchange="setM(${i},'refine',+this.value)">${range(1, 5).map(r => `<option value="${r}" ${r === m.refine ? 'selected' : ''}>${r}단계</option>`).join('')}</select></div>
-    <div class="row"><label>성유물</label><select onchange="setSetMode(${i},this.value)"><option value="4" ${set4 ? 'selected' : ''}>4세트</option><option value="22" ${!set4 ? 'selected' : ''}>2+2세트</option></select></div>
-    <div class="row"><label></label><select onchange="setSet(${i},0,this.value)">${setOpts(m.sets[0])}</select></div>
-    ${!set4 ? `<div class="row"><label></label><select onchange="setSet(${i},1,this.value)">${setOpts(m.sets[1])}</select></div>` : ''}
-    <div class="row"><label>시간의 모래</label><select onchange="setMain(${i},'sands',this.value)">${opt(SANDS, m.mains.sands)}</select></div>
-    <div class="row"><label>공간의 성배</label><select onchange="setMain(${i},'goblet',this.value)">${opt(goblets, m.mains.goblet)}</select></div>
-    <div class="row"><label>이성의 왕관</label><select onchange="setMain(${i},'circlet',this.value)">${opt(CIRCLET, m.mains.circlet)}</select></div>
-    <div class="row"><label>특성 레벨</label><div class="tri">${['na', 'skill', 'burst'].map(k =>
-      `<select onchange="setTalent(${i},'${k}',+this.value)">${range(1, 10).map(l => `<option ${l === m.talents[k] ? 'selected' : ''}>${l}</option>`).join('')}</select>`).join('')}</div></div>
-    <div class="row"><label>운명의 자리</label><select onchange="setM(${i},'cons',+this.value)">${range(0, 6).map(n => `<option value="${n}" ${n === m.cons ? 'selected' : ''}>${n === 0 ? '명함' : n + '돌'}</option>`).join('')}</select></div>
-    ${fs ? `<div class="statgrid">
-      <div><span>HP</span><span>${fmt(fs.hp)}</span></div><div><span>공격력</span><span>${fmt(fs.atk)}</span></div>
-      <div><span>방어력</span><span>${fmt(fs.def)}</span></div><div><span>원소 마스터리</span><span>${fmt(fs.em)}</span></div>
-      <div><span>치명타 확률</span><span>${pc(fs.cr)}</span></div><div><span>치명타 피해</span><span>${pc(fs.cd)}</span></div>
-      <div><span>원소 충전 효율</span><span>${pc(fs.er)}</span></div><div><span>${c.ele ? ELE[c.ele][0] + ' 피해' : '피해'}</span><span>${pc(fs[c.ele + '%'] || 0)}</span></div>
+  const f = (label, inner) => `<div class="f"><label>${label}</label>${inner}</div>`;
+  const art = ART(m.gc);
+  return `<div class="card mc" style="--el:${col}">
+    <div class="art">${share != null ? `<span class="share">${pc(share)}</span>` : ''}
+      ${art ? `<img src="${art}" alt="${esc(c.ko)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph',textContent:'${esc(c.ko).slice(0, 1)}'}))">`
+        : `<div class="ph">${esc(c.ko).slice(0, 1)}</div>`}</div>
+    <div class="body">
+    <div class="top">
+      <select class="who" onchange="setChar(${i},this.value)">${charOptions(m.gc)}</select>
+      <div class="dps">${res ? fmt(res.per[i]) : '—'}<span>DPS</span></div>
+      ${asm ? `<div class="slot">${i + 1}번 칸 <button class="mini-btn" ${i === 0 ? 'disabled' : ''} onclick="moveSlot(${i},-1)">▲</button><button class="mini-btn" ${i === 3 ? 'disabled' : ''} onclick="moveSlot(${i},1)">▼</button>
+        <label style="color:${state.driver === i ? 'var(--hydro)' : 'var(--tx2)'}"><input type="radio" name="drv" ${state.driver === i ? 'checked' : ''} onchange="setCfg('driver',${i})"> 메인 딜러</label></div>` : ''}
+    </div>
+    <div class="fields">
+      ${f('무기', `<select onchange="setWeapon(${i},this.value)">${weapons.map(w =>
+        `<option value="${w.gc}" ${w.gc === m.weapon ? 'selected' : ''}>${esc(w.ko)}</option>`).join('')}</select>`)}
+      ${f('재련', `<select onchange="setM(${i},'refine',+this.value)">${range(1, 5).map(r => `<option value="${r}" ${r === m.refine ? 'selected' : ''}>${r}단계</option>`).join('')}</select>`)}
+      ${f('운명의 자리', `<select onchange="setM(${i},'cons',+this.value)">${range(0, 6).map(n => `<option value="${n}" ${n === m.cons ? 'selected' : ''}>${n === 0 ? '명함' : n + '돌'}</option>`).join('')}</select>`)}
+      ${f('특성 (일반 · 스킬 · 폭발)', `<div class="tri">${['na', 'skill', 'burst'].map(k =>
+        `<select onchange="setTalent(${i},'${k}',+this.value)">${range(1, 10).map(l => `<option ${l === m.talents[k] ? 'selected' : ''}>${l}</option>`).join('')}</select>`).join('')}</div>`)}
+      ${f('성유물', `<select onchange="setSetMode(${i},this.value)"><option value="4" ${set4 ? 'selected' : ''}>4세트</option><option value="22" ${!set4 ? 'selected' : ''}>2+2세트</option></select>`)}
+      ${f(set4 ? '세트' : '세트 1', `<select onchange="setSet(${i},0,this.value)">${setOpts(m.sets[0])}</select>`)}
+      ${!set4 ? f('세트 2', `<select onchange="setSet(${i},1,this.value)">${setOpts(m.sets[1])}</select>`) : ''}
+      ${f('시간의 모래', `<select onchange="setMain(${i},'sands',this.value)">${opt(SANDS, m.mains.sands)}</select>`)}
+      ${f('공간의 성배', `<select onchange="setMain(${i},'goblet',this.value)">${opt(goblets, m.mains.goblet)}</select>`)}
+      ${f('이성의 왕관', `<select onchange="setMain(${i},'circlet',this.value)">${opt(CIRCLET, m.mains.circlet)}</select>`)}
+    </div>
+    ${fs ? `<div class="stats">
+      <span>HP<b>${fmt(fs.hp)}</b></span><span>공격력<b>${fmt(fs.atk)}</b></span><span>방어력<b>${fmt(fs.def)}</b></span>
+      <span>원소 마스터리<b>${fmt(fs.em)}</b></span><span>치명타 확률<b>${pc(fs.cr)}</b></span><span>치명타 피해<b>${pc(fs.cd)}</b></span>
+      <span>원소 충전 효율<b>${pc(fs.er)}</b></span><span>${c.ele ? ELE[c.ele][0] + ' 피해' : '피해'}<b>${pc(fs[c.ele + '%'] || 0)}</b></span>
     </div>` : ''}
     <div class="note">부옵션 유동 ${GC3.LIQUID}굴림 <span class="tag ${m.subsSrc === 'opt' || m.subsSrc === 'kqm' ? 'cur' : ''}">${m.subsSrc === 'opt' ? 'gcsim 최적화' : m.subsSrc === 'kqm' ? 'KQM 설정' : (m.subsSrc === 'auto' ? '자동 최적화' + (m.mainsAuto === false ? ' (주옵션은 직접 고른 것)' : '') : typeof DEFS !== 'undefined' && DEFS[m.gc] && DEFS[m.gc].subw ? '기본 배분 (KQM 평균)' : '기본 배분')}</span><br>
       ${Object.entries(subs).filter(([, n]) => n > 0).map(([k, n]) => `${SHORT[k]} ${n}`).join(' · ')} <span style="color:var(--tx3)">(+ 10종 각 2굴림 고정)</span></div>
@@ -1793,6 +1831,7 @@ function memberCard(m, i, res, asm) {
       <button onclick="showSets(${i})">성유물 순위</button>
       <button onclick="showCons(${i})">운명의 자리</button>
       <button onclick="showDetail(${i})" ${res ? '' : 'disabled'}>피해 내역</button>
+    </div>
     </div>
   </div>`;
 }
@@ -2195,7 +2234,7 @@ function footer() {
       <b>검토 중</b> 표시(${D.chars.filter(c => c.wip).map(c => c.ko).join(', ')})는 gcsim 원본에 아직 병합되지 않은 구현(커뮤니티 프레임 자료 기반, 리뷰 진행 중)을 가져온 것이라 수치가 바뀔 수 있습니다.
       <b>추정</b> 표시(${D.chars.filter(c => c.est).map(c => c.ko).join(', ')})는 gcsim에 구현이 없어 직접 만든 것입니다. 스킬 수치·자원 규칙은 게임 데이터 그대로지만, 프레임은 유튜브 영상에서 잰 값과 비슷한 캐릭터를 참고한 추정치라 실제와 다를 수 있습니다.
       전용 행동 블록 ${Object.keys(ROT.BLOCKS).length}명, 나머지는 기본 블록.<br>
-    · 한국어 명칭: genshin-db 데이터.<br>
+    · 한국어 명칭: genshin-db 데이터. 캐릭터 그림: 게임 기본 초상화를 <a href="https://enka.network" target="_blank" rel="noopener">enka.network</a>에서 불러옵니다.<br>
     · 원신(Genshin Impact)의 이름과 게임 데이터는 HoYoverse의 것이며, 이 사이트는 HoYoverse·KQM과 관계없는 개인 팬 사이트입니다.
   </div>`;
 }

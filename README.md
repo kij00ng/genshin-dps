@@ -19,4 +19,5 @@
 - **이 사이트의 코드**도 같은 AGPL-3.0을 따릅니다.
 - **KQM DB 로테이션**: [db.kqm.gg](https://db.kqm.gg)에 공유된 설정에서 가져왔습니다.
 - **한국어 명칭**: genshin-db 데이터.
+- **캐릭터 그림**: 게임 기본 초상화를 [enka.network](https://enka.network)에서 불러옵니다 (저장소에는 그림 파일이 없습니다).
 - 원신(Genshin Impact)의 이름과 게임 데이터는 HoYoverse의 것이며, 이 사이트는 HoYoverse·KQM과 관계없는 개인 팬 사이트입니다.
