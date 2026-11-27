@@ -1669,8 +1669,17 @@ function render() {
             ${sw.length ? `<button class="mini-btn" onclick="erSands()">${sw.map(m => CH[m.gc].ko).join(', ')} 시간의 모래를 원충으로</button>` : ''}`
             : state.autoER === false ? `<a href="#calc">계산 조건</a>의 <b>자동 최적화</b>를 켜세요(원충을 사이클에 맞춰 채웁니다).` : `원충 시간의 모래나 원충 무기로 바꾸거나, <a href="#rotation">로테이션</a> 화면의 <b>이 설정의 장비 그대로 불러오기</b>를 쓰세요.`; })()}</div>` : ''}
       ${res.duration >= 299 && isFinite_(rot.text) ? `<div class="note" style="color:var(--warn)">로테이션이 300초 안에 끝나지 않아 300초에서 끊었습니다. 어떤 조건(예: 특정 무기·운명의 자리 효과를 기다리는 반복문)이 이 장비에서 충족되지 않는 것 같습니다. 로테이션을 직접 편집해 보세요.</div>` : ''}
-      ${ign && !isFinite_(rot.text) && state.members.some((m, i) => ign.bursts[i] - res.bursts[i] > 0.3) ? `<div class="note" style="color:var(--warn)">원충 부족: 에너지만 충분하면 로테이션대로 원소폭발을 더 쓸 수 있는 캐릭터가 있습니다.
-        ${state.autoER === false ? '<a href="#calc">계산 조건</a>의 <b>자동 최적화</b>를 켜면 원충을 사이클에 맞춰 채웁니다. ' : ''}자동 최적화 후에도 남아 있으면 부옵션 원충 상한(유동 10굴림)을 넘는 것이니, 시간의 모래나 무기를 원충으로 바꿔 보세요.</div>` : ''}
+      ${(() => { if (!ign || isFinite_(rot.text)) return '';
+        // 원충 부족 캐릭터와, 그 캐릭터의 부옵션 원충 굴림 / 상한 (상한은 캐릭터마다 다르다: 시간의 모래가 원충이면 8, 아니면 10)
+        const short = state.members.filter((m, i) => ign.bursts[i] - res.bursts[i] > 0.3);
+        if (!short.length) return '';
+        const info = short.map(m => `${esc(CH[m.gc].ko)} (원충 부옵션 ${(m.subs && m.subs.er) || 0} / 최대 ${GC3.liquidCaps(m).er}굴림)`).join(', ');
+        const full = short.some(m => m.subs && (m.subs.er || 0) >= GC3.liquidCaps(m).er);
+        return `<div class="note" style="color:var(--warn)">원충 부족: ${info} — 에너지만 충분하면 로테이션대로 원소폭발을 더 쓸 수 있습니다.
+          ${state.autoER === false ? '<a href="#calc">계산 조건</a>의 <b>자동 최적화</b>를 켜면 계산할 때 원충을 사이클에 맞춰 채웁니다.'
+            : full ? '부옵션 원충이 이미 최대라 부옵션만으로는 모자랍니다. 시간의 모래나 무기를 원충으로 바꿔 보세요.'
+            : short.every(m => m.subsSrc === 'auto') ? '원충을 더 넣으면 원소폭발은 늘지만 팀 DPS는 오히려 낮아져서 이 정도로 맞춘 것입니다.'
+            : '시간의 모래나 무기를 원충으로 바꿔 보세요.'}</div>`; })()}
       ${(() => { const w = []; state.members.forEach((m, i) => { const f = res.failed && res.failed[i]; if (!f) return;
           if (f.stamina >= 1) w.push(`${CH[m.gc].ko} 스태미나 부족 ${f.stamina.toFixed(1)}초`);
           if (f.skill >= 1) w.push(`${CH[m.gc].ko} 원소전투 스킬 쿨타임 ${f.skill.toFixed(1)}초`);
@@ -1690,8 +1699,6 @@ function render() {
       ${kq ? modeBtn('kqm', 'KQM DB') : ''}
       ${modeBtn('assemble', '자동 조립')}
       ${modeBtn('custom', '직접 편집')}
-      ${rot.kind === 'assemble' ? `<span style="margin-left:8px;font-size:12px;color:var(--tx2)">메인 딜러 필드 시간</span>
-        <input type="number" min="2" max="40" step="0.5" value="${fieldOf(state)}" style="width:70px" onchange="setCfg('field',+this.value); state.fieldSet = true"> 초${state.field == null ? ' <span style="color:var(--tx3);font-size:11.5px">(캐릭터 기본)</span>' : ` <button class="mini-btn" onclick="state.field = null; state.fieldSet = false; render()">기본값</button>`}` : ''}
     </div>
     ${rot.kind === 'kqm' ? kqmInfo(rot.kq) : ''}
     ${(() => { const pk = rot.kind === 'kqm' && !state.burstMode ? BWPICK.get(bwKey(state)) : null;
@@ -1906,7 +1913,7 @@ function memberCard(m, i, res, asm) {
     </div>` : ''}
     <div class="foot2">
       <div class="subs">부옵션 <span class="tag ${m.subsSrc === 'opt' || m.subsSrc === 'kqm' ? 'cur' : ''}">${m.subsSrc === 'opt' ? 'gcsim 최적화' : m.subsSrc === 'kqm' ? 'KQM 설정' : (m.subsSrc === 'auto' ? '자동 최적화' + (m.mainsAuto === false ? ' (주옵션은 직접 고른 것)' : '') : typeof DEFS !== 'undefined' && DEFS[m.gc] && DEFS[m.gc].subw ? '기본 배분 (KQM 평균)' : '기본 배분')}</span>
-        ${Object.entries(subs).filter(([, n]) => n > 0).map(([k, n]) => `${SHORT[k]} ${n}`).join(' · ')} <span style="color:var(--tx3)" title="유동 ${GC3.LIQUID}굴림 + 10종 각 2굴림 고정">(유동 ${GC3.LIQUID}굴림)</span></div>
+        ${Object.entries(subs).filter(([, n]) => n > 0).map(([k, n]) => `${SHORT[k]} ${n}`).join(' · ')} <span style="color:var(--tx3)" title="유동 ${GC3.LIQUID}굴림을 나눠 넣음 (한 옵션 최대 10굴림, 주옵션과 같은 옵션은 8굴림) + 10종 각 2굴림 고정">(유동 ${GC3.LIQUID}굴림 나눔)</span></div>
       <div class="btns">
         <button onclick="showWeapons(${i})">무기 순위</button>
         <button onclick="showSets(${i})">성유물 순위</button>
@@ -1959,8 +1966,8 @@ window.setMain = (i, slot, v) => { const m = state.members[i]; m.mains[slot] = v
 window.setTalent = (i, k, v) => { state.members[i].talents[k] = v; render(); };
 window.setSetMode = (i, v) => { const m = state.members[i]; m.sets = v === '4' ? [m.sets[0]] : [m.sets[0], m.sets[1] && m.sets[1] !== m.sets[0] ? m.sets[1] : 'gladiatorsfinale']; render(); };
 window.setSet = (i, j, v) => { state.members[i].sets[j] = v; render(); };
-// 메인 딜러 필드 시간: 직접 정하지 않았으면 그 캐릭터 블록의 기본값 (예: 로엔 13초, 소 15초, 호두 9초)
-const fieldOf = st => st.field != null ? st.field : ROT.defaultField(st.members[st.driver] ? st.members[st.driver].gc : '');
+// 메인 딜러 필드 시간: 그 캐릭터 블록의 기본값 (예: 로엔 13초, 소 15초, 호두 9초). 직접 정하는 칸은 없앴다 (예전에 저장된 값도 쓰지 않음)
+const fieldOf = st => ROT.defaultField(st.members[st.driver] ? st.members[st.driver].gc : '');
 window.setCfg = (k, v) => { if (k === 'baseResPct') state.res = v / 100; else state[k] = v; render(); };
 window.setRotMode = (k) => { state.adaptLow = false;
   if (k === 'custom' && state.rotMode !== 'custom') state.rotCustom = rotationOf(state).text;
