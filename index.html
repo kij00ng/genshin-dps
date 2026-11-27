@@ -1351,6 +1351,9 @@ try {
     if (ms.every(Boolean)) state = Object.assign(defaultState(), sv, { members: ms });
     // 예전 버전은 필드 시간 12초를 늘 저장했다 → 블록 기본값을 쓰게
     if (state.field === 12 && !sv.fieldSet) state.field = null;
+    // 메인 딜러는 이제 항상 1번 칸. 예전에 다른 칸을 메인 딜러로 골라 저장했으면 그 캐릭터를 1번 칸으로 옮긴다
+    if (state.driver > 0 && state.members[state.driver]) state.members.unshift(state.members.splice(state.driver, 1)[0]);
+    state.driver = 0;
   }
 } catch (e) {}
 const save = () => { try { localStorage.setItem('gdps3', JSON.stringify(state)); } catch (e) {} };
@@ -1632,14 +1635,14 @@ function render() {
 
   let h = '';
   // 영웅 영역
-  // 파티 DPS만. 계산 전에는 "계산하기", 계산 중·오류일 때만 한 줄 상태를 보여 준다
+  // 파티 DPS만. "계산하기" 버튼과 계산 중·오류 상태는 "파티 DPS" 글자 오른쪽 같은 줄에 둬서 높이가 바뀌지 않게 한다
   h += `<div class="hero"><div>
-      <div class="big">${res ? fmt(res.dps) : '—'}<span class="unit">파티 DPS</span></div>
-      ${gated ? `<button class="pri" style="font-size:13px;padding:6px 16px;margin-top:8px" onclick="calcNow()">계산하기</button>`
+      <div class="big" style="display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 14px">${res ? fmt(res.dps) : '—'}<span class="unit" style="margin-left:-8px">파티 DPS</span>
+      ${gated ? `<button class="pri" style="font-size:13px;padding:6px 16px;letter-spacing:0;align-self:center" onclick="calcNow()">계산하기</button>`
         : res ? ''
-        : `<div style="font-size:11.5px;margin-top:4px">${err ? `<span style="color:var(--bad)">계산 오류: ${esc(errWhere(err, gcsl, rot))}</span>`
+        : `<span style="font-size:12px;font-weight:400;letter-spacing:0;align-self:center">${err ? `<span style="color:var(--bad)">계산 오류: ${esc(errWhere(err, gcsl, rot))}</span>`
           : st === 'error' ? `<span style="color:var(--bad)">gcsim을 불러오지 못했습니다: ${esc(GCPOOL.state.error || '')}</span>`
-          : `<span style="color:var(--anemo)" id="fitMsg">${st !== 'ready' ? 'gcsim 불러오는 중…' : fitting ? (fit.msg || '주옵션·부옵션 맞추는 중…') : '계산 중…'}</span>`}</div>`}
+          : `<span style="color:var(--anemo)" id="fitMsg">${st !== 'ready' ? 'gcsim 불러오는 중…' : fitting ? (fit.msg || '주옵션·부옵션 맞추는 중…') : '계산 중…'}</span>`}</span>`}</div>
     </div></div>`;
 
   // 파티 카드
@@ -1708,7 +1711,7 @@ function render() {
       return `<div class="note" style="border:0;margin-top:4px;padding-top:0">${txt}. 이 파티는 그쪽이 <b>${sign((pk.mode === 'wait' ? pk.waited : pk.retried) / pk.skip - 1)}</b> 높습니다 (같은 장비로 짧게 비교).</div>`; })()}
     ${rot.autoPicked ? `<div class="note" style="border:0;margin-top:4px;padding-top:0">KQM DB 설정은 제출자의 운명의 자리·무기에 맞춘 사이클입니다. 지금 설정으로는 자동 조립이 <b>${sign(rot.autoPicked.asm / rot.autoPicked.kq - 1)}</b> 높아서 자동 조립을 씁니다 (같은 장비로 짧게 비교). KQM DB 버튼을 누르면 KQM 설정으로 계산합니다.</div>` : ''}
     ${rot.kind === 'assemble' ? `<div class="note" style="border:0;margin-top:2px;padding-top:0">파티 칸 순서대로 서포터가 행동한 뒤 메인 딜러가 정한 시간 동안 공격합니다.
-      순서는 카드의 ◀ ▶로 바꿉니다. ${autoNotes()}</div>${similarTeams()}` : ''}
+      1번 칸이 메인 딜러이고, 순서는 파티 편성에서 바꿉니다. ${autoNotes()}</div>${similarTeams()}` : ''}
     ${kqmState === 'loading' ? '<div class="note" style="border:0">KQM DB 프리셋 불러오는 중…</div>' : kqmState === 'error' ? '<div class="note" style="border:0;color:var(--warn)">KQM DB 프리셋을 불러오지 못했습니다</div>' : ''}
     <textarea id="rotText" spellcheck="false" ${rot.kind === 'custom' ? '' : 'readonly'} onchange="setRotCustom(this.value)"
       style="width:100%;min-height:${Math.min(420, 40 + rot.text.split('\n').length * 17)}px;margin-top:8px;background:var(--code);color:var(--codeTx);border:1px solid var(--line);border-radius:8px;padding:8px;font:12px/1.4 ui-monospace,Consolas,monospace">${esc(rot.text)}</textarea>
@@ -1867,8 +1870,7 @@ function applyParty(draft) {
     if (state.rotMode === 'custom') state.rotMode = 'auto';
   }
   state.members = ms;
-  const di = ms.findIndex(m => m.gc === drv);
-  state.driver = di >= 0 ? di : 0;
+  state.driver = 0;   // 메인 딜러는 항상 1번 칸
   return true;
 }
 // asm: 자동 조립 로테이션일 때만 칸 순서·메인 딜러가 로테이션에 영향을 주므로 그때만 보여 준다
@@ -1892,8 +1894,7 @@ function memberCard(m, i, res, asm) {
     <div class="top">
       <div class="who">${esc(c.ko)}${c.est ? ' <span class="tag">추정</span>' : c.wip ? ' <span class="tag">검토 중</span>' : ''}</div>
       <div class="dps">${res ? fmt(res.per[i]) : '—'}<span>DPS</span></div>
-      ${asm ? `<div class="slot">${i + 1}번 칸 <button class="mini-btn" ${i === 0 ? 'disabled' : ''} onclick="moveSlot(${i},-1)">▲</button><button class="mini-btn" ${i === 3 ? 'disabled' : ''} onclick="moveSlot(${i},1)">▼</button>
-        <label style="color:${state.driver === i ? 'var(--hydro)' : 'var(--tx2)'}"><input type="radio" name="drv" ${state.driver === i ? 'checked' : ''} onchange="setCfg('driver',${i})"> 메인 딜러</label></div>` : ''}
+      ${asm && i === 0 ? `<span class="tag" style="color:var(--el);border-color:var(--el);font-weight:700" title="자동 조립 로테이션에서 1번 칸이 메인 딜러(필드에 가장 오래 머무는 캐릭터)입니다. 순서는 파티 편성에서 바꿉니다">MAIN</span>` : ''}
     </div>
     <div class="fields">
       ${f('무기', `<select onchange="setWeapon(${i},this.value)">${[5, 4, 3, 2, 1].map(r => { const g = weapons.filter(w => w.rarity === r)
