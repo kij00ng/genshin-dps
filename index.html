@@ -1718,16 +1718,6 @@ function render() {
     <textarea id="rotText" spellcheck="false" ${rot.kind === 'custom' ? '' : 'readonly'} onchange="setRotCustom(this.value)"
       style="width:100%;min-height:${Math.min(420, 40 + rot.text.split('\n').length * 17)}px;margin-top:8px;background:var(--code);color:var(--codeTx);border:1px solid var(--line);border-radius:8px;padding:8px;font:12px/1.4 ui-monospace,Consolas,monospace">${esc(rot.text)}</textarea>
     ${rot.kind !== 'custom' ? `<div class="note" style="border:0">gcsim 문법(gcsl)입니다. 고치려면 <b>직접 편집</b>을 누르세요 — 지금 내용이 복사됩니다.</div>` : `<div class="note" style="border:0">편집 후 바깥을 누르면 적용됩니다. 문법 오류는 위쪽에 표시됩니다.</div>`}
-  </div></section>
-  <section><h2>LLM으로 로테이션 짜기 <span class="h2s">ChatGPT·Gemini·Claude 등에 맡기기</span></h2><div class="panel">
-    <div class="note" style="border:0;margin-top:0;padding-top:0">① 원하는 사이클을 편하게 적고 ② <b>LLM에게 보낼 글 복사</b>를 눌러 LLM에 붙여 넣은 뒤 ③ 받은 코드를 아래 칸에 붙여 넣고 <b>로테이션으로 쓰기</b>를 누르세요.
-      복사되는 글에는 gcsim 로테이션 문법, 지금 파티, 캐릭터별 동작 예시가 들어 있습니다.</div>
-    <textarea id="llmReq" spellcheck="false" placeholder="예) 미코 eee, 오데트 ee, 니콜 e, 그다음 산드로네 e 강공 3번 q 강공 3번 e 강공 3번을 계속 반복"
-      oninput="state.llmReq=this.value;save()" style="width:100%;min-height:70px;margin-top:4px;background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px;line-height:1.5;font-family:inherit">${esc(state.llmReq || '')}</textarea>
-    <div class="row" style="gap:8px;flex-wrap:wrap"><button class="pri" onclick="copyLlmPrompt()">LLM에게 보낼 글 복사</button><span id="llmMsg" style="font-size:12px;color:var(--tx3)"></span></div>
-    <textarea id="llmOut" spellcheck="false" placeholder="LLM이 준 코드를 여기에 붙여 넣으세요 (\`\`\` 표시는 있어도 됩니다)"
-      style="width:100%;min-height:90px;margin-top:8px;background:var(--code);color:var(--codeTx);border:1px solid var(--line);border-radius:8px;padding:8px;font:12px/1.4 ui-monospace,Consolas,monospace"></textarea>
-    <div class="row" style="gap:8px"><button onclick="useLlmRotation()">로테이션으로 쓰기</button><span style="font-size:12px;color:var(--tx3)">직접 편집으로 바뀌고, 계산하기를 누르면 계산합니다. 문법이 틀리면 몇 번째 줄인지 위쪽에 나옵니다.</span></div>
   </div></section>`;
 
   // 계산 조건
@@ -1991,73 +1981,6 @@ window.setRotMode = (k) => { state.adaptLow = false;
   state.rotMode = k; render();
 };
 window.setRotCustom = (t) => { state.rotCustom = t; render(); };
-/* LLM으로 로테이션 짜기: 문법 요약 + 지금 파티 + 캐릭터별 동작 예시 + 사용자의 요청을 한 덩어리 글로 만들어 복사한다.
-   사용자가 ChatGPT·Gemini·Claude 등에 붙여 넣고, 받은 gcsl 코드를 "로테이션으로 쓰기"로 직접 편집 칸에 넣는다 (사이트에서 LLM을 부르지 않음) */
-function llmPrompt(req) {
-  const ms = state.members;
-  const party = ms.map((m, i) => { const c = CH[m.gc];
-    return `${i + 1}. ${c.ko} — gcsim 이름 \`${m.gc}\`, ${ELE[c.ele] ? ELE[c.ele][0] : '-'} 원소, ${c.weapon}, ${m.cons === 0 ? '명함' : m.cons + '돌'}, 무기 ${(WP[m.weapon] || {}).ko || m.weapon}`; }).join('\n');
-  const ex = ms.map(m => { const b = ROT.BLOCKS[m.gc]; if (!b) return null;
-    const lines = [...(b.support || []), ...(b.step || [])].filter(l => !String(l).startsWith('#Q#')).map(l => String(l).split('$').join(m.gc));
-    return lines.length ? `- ${CH[m.gc].ko}: ${[...new Set(lines)].join('  /  ')}` : null; }).filter(Boolean).join('\n');
-  const cur = rotationOf(state).text;
-  return `너는 원신 전투 시뮬레이터 gcsim의 로테이션 스크립트(gcsl)를 쓰는 도우미야.
-아래 [요청]을 [파티]에 맞는 gcsl 코드로 바꿔 줘. 설명 없이 \`\`\` 코드 블록 하나만 답해.
-
-[gcsl 문법 요약]
-- 한 줄에 한 캐릭터: \`캐릭터 동작1, 동작2, ...;\` (끝에 세미콜론). 캐릭터 이름은 아래 [파티]의 gcsim 이름을 그대로 써.
-- 캐릭터가 바뀌면 자동으로 교체된다(따로 swap을 쓰지 않는다).
-- 동작: attack(일반 공격 1타), charge(강공격), aim(활 조준 사격), skill(원소전투 스킬), burst(원소폭발), dash, jump, walk, low_plunge, high_plunge(낙하 공격).
-- 같은 동작 반복: \`동작:횟수\` 예) \`yaemiko skill:3;\` \`sandrone charge:3;\` 일반 공격 3타는 \`attack:3\`.
-- 매개변수는 대괄호: 스킬 길게 누르기 \`skill[hold=1]\`, 활 완충 \`aim[hold=2]\` 등. 캐릭터마다 다른 매개변수는 아래 [캐릭터별 동작 예시]를 따른다.
-- 맨 위 첫 줄에 첫 필드 캐릭터: \`active 캐릭터;\`
-- 끝없이 반복: \`while 1 { ... }\` (사이트가 정한 시간 동안 반복된다). 정해진 횟수: \`for let i = 0; i < 4; i = i + 1 { ... }\`
-- 조건: \`if .캐릭터.burst.ready { 캐릭터 burst; }\` / 쓸 수 있는 값: .캐릭터.skill.ready, .캐릭터.burst.ready, .캐릭터.energy, .캐릭터.energymax, f()(경과 프레임, 60프레임 = 1초)
-- 기다리기: \`wait(60);\` (프레임 단위). 주석은 \`#\`.
-- 원소폭발은 에너지가 모자라면 찰 때까지 멈추므로, 사이클마다 에너지가 확실하지 않으면 \`if .캐릭터.burst.ready { 캐릭터 burst; }\`로 감싸.
-- 스킬도 쿨타임 중이면 멈추므로, 쿨타임이 확실하지 않으면 \`if .캐릭터.skill.ready { ... }\`로 감싸.
-- 특성 레벨은 모두 10이다.
-
-[사이클 작성 요령] (이걸 어기면 DPS가 크게 떨어진다)
-- 요청에 원소폭발이 적혀 있지 않은 캐릭터도, 사용자가 "원소폭발 없이"라고 하지 않았다면 그 캐릭터 차례에 \`if .캐릭터.burst.ready { 캐릭터 burst; }\`를 넣어 준비되면 쓰게 해.
-- 메인 딜러가 한 번 필드에 머무는 시간은 ${ROT.defaultField(ms[0] ? ms[0].gc : '')}초 안팎으로 맞춰. 너무 길면 서포터의 설치물·버프가 끝난 채로 공격하게 된다.
-  시간으로 정하려면 \`let t = f(); while f() - t < 600 { ... }\` (600프레임 = 10초) 모양을 써.
-- 강공격·스킬 등에 대괄호 매개변수가 붙은 캐릭터는 [캐릭터별 동작 예시]의 매개변수를 그대로 써 (예: 길게 누르는 강공격). 매개변수를 지어내지 마.
-
-[파티] (1번 칸이 메인 딜러)
-${party}
-
-[캐릭터별 동작 예시] (이 사이트의 자동 조립에서 쓰는 줄. 매개변수·조건 이름을 참고해)
-${ex || '- (없음)'}
-
-[참고: 지금 이 파티에 쓰는 로테이션] (문법·매개변수 참고용. 그대로 베끼지 말고 [요청]대로 새로 짜)
-\`\`\`
-${cur.length > 3000 ? cur.slice(0, 3000) + '\n# …(생략)' : cur}
-\`\`\`
-
-[요청]
-${req || '(요청을 적지 않았어. 이 파티에 맞는 일반적인 사이클을 짜 줘.)'}`;
-}
-window.copyLlmPrompt = async () => {
-  const el = document.getElementById('llmReq'); if (el) state.llmReq = el.value;
-  const text = llmPrompt((state.llmReq || '').trim());
-  const msg = document.getElementById('llmMsg');
-  try { await navigator.clipboard.writeText(text); if (msg) msg.textContent = '복사했습니다. LLM에 붙여 넣으세요.'; }
-  catch (e) {
-    // 클립보드가 막힌 환경(일부 미리보기 등): 글을 창에 띄워 직접 복사하게 한다
-    modal('LLM에게 보낼 글', '아래 글을 모두 선택해 복사하세요 (Ctrl+A, Ctrl+C).', `<textarea readonly style="width:100%;min-height:50vh;font:12px/1.4 ui-monospace,Consolas,monospace">${esc(text)}</textarea>`);
-    const ta = document.querySelector('#modal textarea'); if (ta) { ta.focus(); ta.select(); }
-  }
-};
-window.useLlmRotation = () => {
-  const el = document.getElementById('llmOut'); if (!el) return;
-  let t = el.value.trim();
-  const m = t.match(/```[a-zA-Z]*\s*\n([\s\S]*?)```/);   // 코드 블록 표시가 있으면 안쪽만
-  if (m) t = m[1].trim();
-  if (!t) return;
-  state.rotMode = 'custom'; state.rotCustom = t; state.adaptLow = false;
-  render(); window.scrollTo(0, 0);
-};
 window.erSands = () => {
   state.members.forEach((m, i) => { if (m.subs && (m.subs.er || 0) >= GC3.liquidCaps(m).er && m.mains.sands !== 'er') { m.mains.sands = 'er'; if (isAuto(m)) { m.subs = null; m.subsSrc = 'default'; } else resetSubsIfCapped(i); } });
   render();
