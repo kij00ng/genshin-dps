@@ -46,7 +46,7 @@ body{margin:0;background:var(--bg);color:var(--tx);
   font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   font-size:14px;line-height:1.55;-webkit-text-size-adjust:100%}
 a{color:var(--acc)}
-.wrap{max-width:1180px;margin:0 auto;padding:16px 14px 60px}
+.wrap{max-width:1560px;margin:0 auto;padding:16px 14px 60px}
 h1{font-size:17px;margin:0 0 2px;font-weight:650;letter-spacing:-.2px}
 .sub{color:var(--tx2);font-size:12.5px;margin-bottom:14px}
 
@@ -58,7 +58,16 @@ h1{font-size:17px;margin:0 0 2px;font-weight:650;letter-spacing:-.2px}
 .hero .meta{color:var(--tx2);font-size:12.5px}
 .hero .meta b{color:var(--tx);font-weight:600}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:12px}
+/* 파티 카드: 넓은 화면은 항상 4칸(가로 4등분), 태블릿은 2칸(2×2), 휴대폰은 1칸 — 3+1로 끊기지 않게 */
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1099px){ .grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:639px){ .grid{grid-template-columns:minmax(0,1fr)} }
+/* 화면 전환 단추 (파티 / 로테이션 / 설명) */
+.nav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.nav a{display:inline-block;padding:6px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--tx2);
+  text-decoration:none;font-size:13px}
+.nav a:hover{border-color:var(--acc);color:var(--acc)}
+.nav a.on{border-color:var(--acc);color:var(--acc);background:var(--panel2);font-weight:600}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
 .card h3{margin:0 0 2px;font-size:14.5px;font-weight:650;display:flex;align-items:center;gap:7px}
 .el{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
@@ -106,7 +115,7 @@ tbody tr:hover{background:var(--hover)}
 .tag.r5{color:var(--r5);border-color:var(--r5Line)}
 .tag.r4{color:var(--r4);border-color:var(--r4Line)}
 .tag.cur{color:var(--priTx);border-color:var(--priLine)}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px;overflow-x:auto;min-width:0}
 .cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 14px}
 .cfg .row > label{width:98px}
 .buffs{font-size:12px;color:var(--tx2);line-height:1.7}
@@ -1570,6 +1579,7 @@ function render() {
     </div>`;
 
   // 파티 카드
+  const iCards = h.length;
   h += '<div class="grid">';
   state.members.forEach((m, i) => { h += memberCard(m, i, res, rot.kind === 'assemble'); });
   h += '</div>';
@@ -1591,7 +1601,7 @@ function render() {
           const sw = cap.filter(m => m.mains.sands !== 'er');
           return cap.length ? `원충 부옵션이 이미 상한(유동 ${GC3.liquidCaps(cap[0]).er}굴림)인 캐릭터: <b>${cap.map(m => CH[m.gc].ko).join(', ')}</b> — 부옵션만으로는 모자랍니다. 원충 시간의 모래나 원충 무기(페보니우스 등)로 바꿔 보세요.
             ${sw.length ? `<button class="mini-btn" onclick="erSands()">${sw.map(m => CH[m.gc].ko).join(', ')} 시간의 모래를 원충으로</button>` : ''}`
-            : state.autoER === false ? `계산 조건의 <b>자동 최적화</b>를 켜세요(원충을 사이클에 맞춰 채웁니다).` : `원충 시간의 모래나 원충 무기로 바꾸거나, 로테이션 칸의 <b>이 설정의 장비 그대로 불러오기</b>를 쓰세요.`; })()}</div>` : ''}
+            : state.autoER === false ? `계산 조건의 <b>자동 최적화</b>를 켜세요(원충을 사이클에 맞춰 채웁니다).` : `원충 시간의 모래나 원충 무기로 바꾸거나, <a href="#rotation">로테이션</a> 화면의 <b>이 설정의 장비 그대로 불러오기</b>를 쓰세요.`; })()}</div>` : ''}
       ${res.duration >= 299 && isFinite_(rot.text) ? `<div class="note" style="color:var(--warn)">로테이션이 300초 안에 끝나지 않아 300초에서 끊었습니다. 어떤 조건(예: 특정 무기·운명의 자리 효과를 기다리는 반복문)이 이 장비에서 충족되지 않는 것 같습니다. 로테이션을 직접 편집해 보세요.</div>` : ''}
       ${ign && !isFinite_(rot.text) && state.members.some((m, i) => ign.bursts[i] - res.bursts[i] > 0.3) ? `<div class="note" style="color:var(--warn)">원충 부족: 에너지만 충분하면 로테이션대로 원소폭발을 더 쓸 수 있는 캐릭터가 있습니다.
         ${state.autoER === false ? '계산 조건의 <b>자동 최적화</b>를 켜면 원충을 사이클에 맞춰 채웁니다. ' : ''}자동 최적화 후에도 남아 있으면 부옵션 원충 상한(유동 10굴림)을 넘는 것이니, 시간의 모래나 무기를 원충으로 바꿔 보세요.</div>` : ''}
@@ -1599,12 +1609,13 @@ function render() {
           if (f.stamina >= 1) w.push(`${CH[m.gc].ko} 스태미나 부족 ${f.stamina.toFixed(1)}초`);
           if (f.skill >= 1) w.push(`${CH[m.gc].ko} 원소전투 스킬 쿨타임 ${f.skill.toFixed(1)}초`);
           if (f.burst >= 1) w.push(`${CH[m.gc].ko} 원소폭발 쿨타임 ${f.burst.toFixed(1)}초`); });
-        return w.length ? `<div class="note" style="color:var(--warn)">행동 대기: ${w.join(' · ')} — 로테이션이 다른 운명의 자리나 장비를 전제로 짜였을 수 있습니다${rot.kind === 'kqm' ? ' (위 제출자 설정 참고)' : ''}.${rot.kind === 'kqm' && !state.adaptLow ? ' <button class="mini-btn" onclick="state.adaptLow=true;render()">낮은 돌파용으로 고쳐 보기</button>' : ''}${rot.kind === 'kqm' ? ' <button class="mini-btn" onclick="setRotMode(\'assemble\')">자동 조립 로테이션으로 보기</button>' : ''}</div>` : ''; })()}
+        return w.length ? `<div class="note" style="color:var(--warn)">행동 대기: ${w.join(' · ')} — 로테이션이 다른 운명의 자리나 장비를 전제로 짜였을 수 있습니다${rot.kind === 'kqm' ? ' (<a href="#rotation">로테이션</a> 화면의 제출자 설정 참고)' : ''}.${rot.kind === 'kqm' && !state.adaptLow ? ' <button class="mini-btn" onclick="state.adaptLow=true;render()">낮은 돌파용으로 고쳐 보기</button>' : ''}${rot.kind === 'kqm' ? ' <button class="mini-btn" onclick="setRotMode(\'assemble\')">자동 조립 로테이션으로 보기</button>' : ''}</div>` : ''; })()}
       ${rxs ? `<div class="note">원소 반응: ${rxs}</div>` : ''}
     </div></section>`;
   }
 
   // 로테이션
+  const iRot = h.length;
   const pre = ROT.presetFor(state.members.map(m => m.gc)), kq = kqmFor(state);
   h += `<section><h2>로테이션 <span class="h2s">${rot.kind === 'preset' ? esc(rot.label) : rot.kind === 'kqm' ? 'KQM DB에 공유된 설정' : rot.kind === 'custom' ? '직접 편집한 순서' : '캐릭터별 행동 블록을 자동으로 조립'}</span></h2><div class="panel">
     <div class="row" style="flex-wrap:wrap;gap:6px">
@@ -1632,6 +1643,7 @@ function render() {
   </div></section>`;
 
   // 계산 조건
+  const iCfg = h.length;
   h += `<section><h2>계산 조건</h2><div class="panel cfg">
     ${num('적 레벨', 'enemyLv', 1, 110, 1, '')}
     ${num('적 기본 내성', 'baseResPct', -100, 90, 5, '%')}
@@ -1641,9 +1653,18 @@ function render() {
     <div class="row"><label>원소 구슬</label><input type="checkbox" ${state.particles ? 'checked' : ''} onchange="setCfg('particles',this.checked)"> <span style="font-size:11px;color:var(--tx3)">8~12초마다 1개 (KQM 표준)</span></div>
   </div></section>`;
 
-  h += footer();
-  document.getElementById('app').innerHTML = h;
+  // 화면 나누기: 파티(카드·요약·계산 조건) / 로테이션 / 설명. 위쪽 DPS 영역은 모든 화면에 둔다
+  const view = curView();
+  const hero = h.slice(0, iCards), party = h.slice(iCards, iRot), rotSec = h.slice(iRot, iCfg), cfg = h.slice(iCfg);
+  document.getElementById('app').innerHTML = navBar(view) + hero
+    + (view === 'rotation' ? rotSec : view === 'about' ? footer() : party + cfg);
 }
+/* 화면 전환: 주소의 #rotation, #about (뒤로 가기로 돌아올 수 있게) */
+const VIEWS = [['party', '파티'], ['rotation', '로테이션'], ['about', '설명']];
+const curView = () => { const v = location.hash.slice(1); return VIEWS.some(([k]) => k === v) ? v : 'party'; };
+const navBar = v => `<nav class="nav">${VIEWS.map(([k, label]) =>
+  `<a href="#${k === 'party' ? '' : k}" class="${k === v ? 'on' : ''}">${label}</a>`).join('')}</nav>`;
+window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); });
 const ROTKO = { preset: '다듬은 프리셋', kqm: 'KQM DB 설정', assemble: '자동 조립', custom: '직접 편집' };
 function kqmInfo(k) {
   const d = new Date(k.date * 1000);
