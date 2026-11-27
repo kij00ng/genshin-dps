@@ -1851,7 +1851,7 @@ function drawParty(keep) {
       return `<button class="pc ${k >= 0 ? 'sel' : ''}" style="--el:${ELE[e][1]}" title="${esc(c.ko)}${c.est ? ' (추정)' : c.wip ? ' (검토 중)' : ''}" onclick="pickChar('${c.gc}')">
         ${k >= 0 ? `<span class="n">${k + 1}</span>` : ''}${portrait(c.gc)}<span class="nm">${esc(c.ko)}</span></button>`; }).join('')}</div></div>`;
   }).join('');
-  modal('파티 편성', `<b>${PICK.slot + 1}번 칸</b>에 넣을 캐릭터를 누르세요. 칸을 눌러 바꿀 칸을 고르고, 파티에 있는 캐릭터를 누르면 고른 칸과 자리를 바꿉니다. 다 고른 뒤 <b>닫기</b>를 누르면 적용됩니다.`,
+  modal('파티 편성', '',
     `<div class="pslots">${slots}</div>${groups}`, keep);
 }
 window.pickSlot = i => { PICK.slot = i; drawParty(true); };
@@ -2005,7 +2005,7 @@ const optSig = st => JSON.stringify([st.members.map(m => [m.gc, m.weapon, m.refi
 function modal(title, sub, body, keep) {
   const sc = document.querySelector('#modal .scroll');
   const prev = keep && sc ? sc.scrollTop : 0;
-  document.getElementById('modalBody').innerHTML = `<h2>${title}</h2><div class="sub">${sub}</div><div class="scroll">${body}</div>`;
+  document.getElementById('modalBody').innerHTML = `<h2>${title}</h2>${sub ? `<div class="sub">${sub}</div>` : ''}<div class="scroll">${body}</div>`;
   document.getElementById('modal').classList.add('on');
   if (!keep) document.querySelector('#modal .inner').scrollTop = 0;
   else { const s2 = document.querySelector('#modal .scroll'); if (s2) s2.scrollTop = prev; }
