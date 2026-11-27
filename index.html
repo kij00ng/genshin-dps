@@ -1223,6 +1223,14 @@ try {
   }
 } catch (e) {}
 const save = () => { try { localStorage.setItem('gdps3', JSON.stringify(state)); } catch (e) {} };
+/* 사용자가 고르는 설정만 모은 서명. 계산은 "계산하기"를 눌러 이 서명이 승인(state.calcSig)됐을 때만 돈다
+   (무기·성유물을 하나 바꿀 때마다 계산이 다시 시작되고, 계산이 끝나 화면을 다시 그리면 열어 둔 선택 목록이 닫혀서 불편했다).
+   자동 최적화가 정하는 부옵션·주옵션(자동)과 페보니우스 자동 배정은 계산 결과라 서명에서 빼거나 계산이 끝난 뒤 다시 승인한다 */
+const inputSig = st => JSON.stringify([st.members.map(m => [m.gc, m.weapon, m.refine, m.sets, m.mainsAuto === false ? m.mains : null,
+  m.talents, m.cons, isAuto(m) ? null : m.subs]), st.rotMode, st.rotCustom, st.driver, st.field, st.enemyLv, st.res, st.particles,
+  st.iters, st.duration, st.autoER]);
+const approveCalc = () => { state.calcSig = inputSig(state); };
+window.calcNow = () => { approveCalc(); render(); };
 
 /* ---- 파티 → gcsim 설정 ---- */
 /* 치명 왕관을 바꾼 장비 (부옵션이 유동 상한을 넘으면 넘는 만큼 반대쪽 치명으로) */
@@ -1426,6 +1434,7 @@ function autoFit() {
           state.autoSig = optSig(state);
         } else fa.gain = r.res.dps / fa.before - 1;
       } else if (r && r.capped.length) favoniusFallback(r.capped, r.res);
+      approveCalc();   // 자동 맞춤·페보니우스 자동 배정으로 바뀐 장비는 계산의 일부라 다시 승인한다
     }
     fit.running = false; fit.msg = '';
     rerender();
@@ -1439,16 +1448,32 @@ const fitReady = () => needFit(state) ? autoFit() : (fit.running ? fit.promise :
 /* ---- 렌더 ---- */
 let last = { gcsl: null, res: null, err: null };
 let rq = false;
-const rerender = () => { if (rq) return; rq = true; setTimeout(() => { rq = false; render(); }, 0); };
+// 계산이 끝나 다시 그릴 때 선택 목록(select)을 열어 두었으면 목록이 닫히므로, 그 목록에서 벗어날 때까지 미룬다
+const rerender = () => { if (rq) return; rq = true; setTimeout(() => { rq = false;
+  const a = document.activeElement;
+  if (a && (a.tagName === 'SELECT' || a.tagName === 'TEXTAREA' || a.tagName === 'INPUT')) { deferRender(a); return; }
+  render(); }, 0); };
+// 목록을 고른 뒤에도 초점이 남아 있을 수 있어, 초점이 옮겨 가거나 15초가 지나면 그린다
+let deferT = null;
+function deferRender(a) {
+  if (deferT) return;
+  const t0 = Date.now();
+  deferT = setInterval(() => {
+    if (document.activeElement !== a || !document.contains(a) || Date.now() - t0 > 15000) { clearInterval(deferT); deferT = null; render(); }
+  }, 400);
+}
 GCPOOL.onStatus(rerender);
 
 function render() {
+  if (state.calcSig == null) approveCalc();   // 처음 열었을 때(저장된 설정 포함)는 바로 계산
   save();
-  const fitting = needFit(state) && GCPOOL.state.status !== 'error';
+  // 설정을 바꾼 뒤 "계산하기"를 누르기 전: 아무 계산도 시작하지 않는다
+  const gated = state.calcSig !== inputSig(state);
+  const fitting = !gated && needFit(state) && GCPOOL.state.status !== 'error';
   if (fitting) autoFit();
   const gcsl = gcslOf(state);
-  let res = fitting ? null : GCPOOL.cached(gcsl), err = null;
-  if (!fitting && !res && GCPOOL.state.status !== 'error') {
+  let res = fitting || gated ? null : GCPOOL.cached(gcsl), err = null;
+  if (!gated && !fitting && !res && GCPOOL.state.status !== 'error') {
     // 설정이 바뀌었으면 아직 시작 안 한 이전 계산은 버린다
     if (last.gcsl && last.gcsl !== gcsl) GCPOOL.cancelQueued('main');
     GCPOOL.run(gcsl, state.iters).then(() => { if (last.gcsl === gcsl) rerender(); },
@@ -1468,7 +1493,7 @@ function render() {
   const dur = res && res.duration && isFinite_(rotationOf(state).text) ? res.duration : state.duration;
   const rot = rotationOf(state);
   { const mode = state.rotMode || 'auto';
-    if ((mode === 'auto' || mode === 'kqm') && rot.kq && GCPOOL.state.status === 'ready') {
+    if (!gated && (mode === 'auto' || mode === 'kqm') && rot.kq && GCPOOL.state.status === 'ready') {
       const cmpAsm = mode === 'auto' && kqmMismatch(state, rot.kq);
       runPick(pickKey(state) + (cmpAsm ? '|a' : ''), cmpAsm);
     } }
@@ -1478,7 +1503,9 @@ function render() {
   // 영웅 영역
   h += `<div class="hero"><div>
       <div class="big">${res ? fmt(res.dps) : '—'}<span class="unit">팀 DPS</span></div>
-      <div style="font-size:11.5px;color:var(--tx3);margin-top:3px">${res
+      <div style="font-size:11.5px;color:var(--tx3);margin-top:3px">${gated
+        ? `<button class="pri" style="font-size:13px;padding:6px 16px;margin:4px 8px 0 0" onclick="calcNow()">계산하기</button>설정을 다 고른 뒤 누르세요. 바뀐 설정으로 주옵션·부옵션을 맞추고 계산합니다.`
+        : res
         ? `gcsim ${res.iterations}회${res.seeded ? ' (고정 시드)' : ''} 평균 · 95% 범위 ±${fmt(1.96 * res.se)} · ${isFinite_(rot.text) ? '로테이션 끝까지' : state.duration + '초'}`
         : err ? `<span style="color:var(--bad)">계산 오류: ${esc(errWhere(err, gcsl, rot))}</span>`
         : st === 'error' ? `<span style="color:var(--bad)">gcsim을 불러오지 못했습니다: ${esc(GCPOOL.state.error || '')}</span>`
@@ -1617,7 +1644,7 @@ window.applyKqmBuild = () => {
     if (b.mains && SANDS.includes(b.mains.sands) && CIRCLET.includes(b.mains.circlet) && /%$|^em$/.test(b.mains.goblet || '') && b.mains.goblet !== 'heal%') m.mains = Object.assign({}, b.mains);
     if (b.subs) { m.subs = Object.assign({}, b.subs); m.subsSrc = 'kqm'; } else { m.subs = null; m.subsSrc = 'default'; }
   }
-  render();
+  approveCalc(); render();
 };
 const modeBtn = (k, label) => `<button class="mini-btn" style="${state.rotMode === k ? 'border-color:var(--hydro);color:var(--hydro)' : ''}" onclick="setRotMode('${k}')">${label}</button>`;
 function autoNotes() {
@@ -1837,6 +1864,7 @@ window.rerank = () => { const a = window._rankArgs; if (a) rankRun(a[0], a[1], a
 async function rankRun(i, cands, title, sub, cols, opts) {
   opts = opts || {};
   window._rankArgs = [i, cands, title, sub, cols, opts];
+  approveCalc();   // 순위를 여는 것은 지금 설정으로 계산하겠다는 뜻
   const token = {}; window._rank = token;
   GCPOOL.cancelQueued('rank');
   if (needFit(state) || fit.running) {
@@ -1984,7 +2012,7 @@ window.applyPatch = (i, pid) => {
   Object.assign(m, p);
   // 순위표 숫자가 그대로 나오도록: 원충 맞춤은 다시 하지 않는다 (인게임에서 바꿔 끼운 것과 같음)
   if (state.autoER !== false && !state.members.some(x => x.subsSrc === 'default')) state.autoSig = optSig(state);
-  closeModal(); render();
+  closeModal(); approveCalc(); render();
 };
 const RANK_SUB0 = '후보마다 이 캐릭터의 주옵션·부옵션을 다시 맞춘 뒤 비교합니다(원충은 원소폭발을 기다리지 않을 만큼, 나머지는 시뮬레이션으로 잰 스탯 가치대로). 최종 후보는 자동 최적화를 쓰는 파티원도 함께 다시 맞춰, 원충 무기가 파티원의 원충 부담을 줄이는 이득까지 반영합니다. ';
 let SEEDED = false;
