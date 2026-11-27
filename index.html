@@ -1263,6 +1263,10 @@ const SHORT = { 'hp%': 'HP%', 'atk%': '공%', 'def%': '방%', em: '원마', er: 
 const SANDS = ['hp%', 'atk%', 'def%', 'em', 'er'];
 const CIRCLET = ['cr', 'cd', 'hp%', 'atk%', 'def%', 'em', 'heal'];
 const WDEF = { '한손검': 'favoniussword', '양손검': 'favoniusgreatsword', '장병기': 'favoniuslance', '법구': 'favoniuscodex', '활': 'favoniuswarbow' };
+// 직접 정한 기본 무기 (전용 무기 목록 SIG를 덮어씀). 종려는 전용 무기 대신 페보니우스 장창(WDEF).
+Object.assign(SIG, { diluc: 'wolfsgravestone', klee: 'lostprayertothesacredwinds' });
+['anemo', 'geo', 'electro', 'dendro', 'hydro', 'pyro', 'cryo'].forEach(e => { SIG['traveler' + e] = 'exaiphanesblade'; });
+delete SIG.zhongli;
 const SET_DEF = { pyro: 'crimsonwitchofflames', hydro: 'nymphsdream', electro: 'thunderingfury', cryo: 'blizzardstrayer',
   anemo: 'viridescentvenerer', geo: 'huskofopulentdreams', dendro: 'deepwoodmemories' };
 // 캐릭터별 기본 세트. KQM DB 최다 사용(DEFS)보다 우선한다.
