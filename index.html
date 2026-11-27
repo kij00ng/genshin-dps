@@ -60,13 +60,13 @@ h1{font-size:17px;margin:0 0 2px;font-weight:650;letter-spacing:-.2px}
 
 /* 파티 카드: 캐릭터마다 가로로 긴 줄 하나 (위아래로 네 줄). 카드는 원소색, 왼쪽 일러스트, 오른쪽 설정 칸 */
 .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
-.card.mc{--el:#888;display:grid;grid-template-columns:128px minmax(0,1fr);padding:0;overflow:hidden;
+.card.mc{--el:#888;display:grid;grid-template-columns:184px minmax(0,1fr);padding:0;overflow:hidden;
   border:1px solid color-mix(in srgb,var(--el) 45%,var(--line));border-left:4px solid var(--el);
   background:linear-gradient(90deg,color-mix(in srgb,var(--el) 18%,var(--panel)) 0,var(--panel) 42%)}
-/* 초상화 칸: 카드 높이에 맞춰 늘어나지 않고 위쪽에 고정 */
-.mc .art{position:relative;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--el) 55%,transparent),color-mix(in srgb,var(--el) 14%,var(--panel)) 72%);
-  display:flex;align-items:flex-start;justify-content:center}
-.mc .art img{width:128px;height:128px;object-fit:contain;display:block}
+/* 초상화 칸: 카드 높이만큼 위아래를 꽉 채운다 (넘치는 좌우·아래는 잘라 얼굴이 위쪽에 오게) */
+.mc .art{position:relative;min-height:160px;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--el) 55%,transparent),color-mix(in srgb,var(--el) 14%,var(--panel)) 72%);
+  display:flex;align-items:center;justify-content:center}
+.mc .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 18%;display:block}
 .mc .art .ph{font-size:48px;font-weight:700;color:color-mix(in srgb,var(--el) 70%,#fff);margin:32px auto}
 .mc .art .share{position:absolute;top:6px;left:6px;font-size:11.5px;font-weight:650;padding:1px 7px;border-radius:999px;
   background:color-mix(in srgb,var(--panel) 75%,transparent);color:var(--tx)}
@@ -109,9 +109,9 @@ h1{font-size:17px;margin:0 0 2px;font-weight:650;letter-spacing:-.2px}
 /* 휴대폰: 초상화를 카드 맨 위 띠로, 설정 칸은 두 줄씩 */
 @media (max-width:639px){
   .card.mc{grid-template-columns:minmax(0,1fr)}
-  .mc .art{justify-content:flex-start;align-items:flex-end;height:84px;
+  .mc .art{justify-content:flex-start;align-items:flex-end;height:84px;min-height:0;
     background:linear-gradient(90deg,color-mix(in srgb,var(--el) 45%,var(--panel)),color-mix(in srgb,var(--el) 8%,var(--panel)))}
-  .mc .art img{width:84px;height:84px;margin:0 0 0 8px}
+  .mc .art img{position:static;width:84px;height:84px;object-fit:contain;margin:0 0 0 8px}
   .mc .art .ph{font-size:32px;margin:auto 0 auto 24px}
   .mc .art .share{left:auto;right:8px}
   .mc .fields{grid-template-columns:repeat(2,minmax(0,1fr))}
