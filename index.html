@@ -1889,9 +1889,7 @@ function memberCard(m, i, res, asm) {
         return g.length ? `<optgroup label="${r}성">${g.map(w => `<option value="${w.gc}" ${w.gc === m.weapon ? 'selected' : ''}>${esc(w.ko)}</option>`).join('')}</optgroup>` : ''; }).join('')}</select>`)}
       ${f('재련', `<select onchange="setM(${i},'refine',+this.value)">${range(1, 5).map(r => `<option value="${r}" ${r === m.refine ? 'selected' : ''}>${r}단계</option>`).join('')}</select>`)}
       ${f('운명의 자리', `<select onchange="setM(${i},'cons',+this.value)">${range(0, 6).map(n => `<option value="${n}" ${n === m.cons ? 'selected' : ''}>${n === 0 ? '명함' : n + '돌'}</option>`).join('')}</select>`)}
-      ${f('성유물', `<select onchange="setSetMode(${i},this.value)"><option value="4" ${set4 ? 'selected' : ''}>4세트</option><option value="22" ${!set4 ? 'selected' : ''}>2+2세트</option></select>`)}
-      ${f(set4 ? '세트' : '세트 1', `<select onchange="setSet(${i},0,this.value)">${setOpts(m.sets[0])}</select>`)}
-      ${!set4 ? f('세트 2', `<select onchange="setSet(${i},1,this.value)">${setOpts(m.sets[1])}</select>`) : ''}
+      ${f('성유물', `<select onchange="setSetChoice(${i},this.value)">${setChoiceOpts(m, c)}</select>`)}
       ${f('시간의 모래', `<select onchange="setMain(${i},'sands',this.value)">${opt(SANDS, m.mains.sands)}</select>`)}
       ${f('공간의 성배', `<select onchange="setMain(${i},'goblet',this.value)">${opt(goblets, m.mains.goblet)}</select>`)}
       ${f('이성의 왕관', `<select onchange="setMain(${i},'circlet',this.value)">${opt(CIRCLET, m.mains.circlet)}</select>`)}
@@ -1915,6 +1913,31 @@ function memberCard(m, i, res, asm) {
   </div>`;
 }
 const setOpts = cur => D.sets.map(s => `<option value="${s.gc}" ${s.gc === cur ? 'selected' : ''}>${esc(s.ko)}</option>`).join('');
+/* 성유물 칸 하나: "4세트" 묶음 아래 세트들, "2+2세트" 묶음 아래 2세트 효과 조합 (세트 이름 대신 효과로, 5성 세트만).
+   2세트 효과가 같으면 어느 세트든 결과가 같으므로 효과 조합마다 대표 세트 두 개를 넣는다.
+   값: "4:세트" 또는 "2:세트A,세트B" */
+const twoKey = gc => ((ST[gc] && ST[gc].p2) || gc).replace(/\s+/g, '');
+const TWO_ORDER = ['공격력', 'HP', '방어력', '원소마스터리', '원소충전효율', '원소피해보너스', '물리', '치명타', '일반공격', '원소전투스킬', '원소폭발', '낙하공격'];
+const twoRank = g => { const k = g.label.replace(/\s+/g, ''); const i = TWO_ORDER.findIndex(t => k.includes(t)); return i < 0 ? 99 : i; };
+function setChoiceOpts(m, c) {
+  const set4 = m.sets.length === 1 || m.sets[0] === m.sets[1];
+  const groups = twoPcGroups(c).slice().sort((a, b) => twoRank(a) - twoRank(b));
+  const curKey = set4 ? null : m.sets.map(twoKey).sort().join('|');
+  let found = false;
+  const pairs = [];
+  groups.forEach((a, ia) => groups.slice(ia).forEach(b => {
+    const sets = a === b ? a.sets.slice(0, 2) : [a.sets[0], b.sets[0]];
+    if (sets.length < 2 || sets[0] === sets[1]) return;
+    const sel = curKey && sets.map(twoKey).sort().join('|') === curKey && !found;
+    if (sel) found = true;
+    pairs.push(`<option value="2:${sets.join(',')}" ${sel ? 'selected' : ''}>${esc(a.label)} + ${esc(b.label)}</option>`);
+  }));
+  // 지금 2+2가 목록의 효과 조합으로 표현되지 않으면(내성 세트 등) 그대로 하나 넣어 둔다
+  const extra = curKey && !found ? `<option value="2:${m.sets.join(',')}" selected>${m.sets.map(g => esc((ST[g] && ST[g].p2) || g)).join(' + ')}</option>` : '';
+  return `<optgroup label="4세트">${D.sets.map(s => `<option value="4:${s.gc}" ${set4 && s.gc === m.sets[0] ? 'selected' : ''}>${esc(s.ko)}</option>`).join('')}</optgroup>`
+    + `<optgroup label="2+2세트">${extra}${pairs.join('')}</optgroup>`;
+}
+window.setSetChoice = (i, v) => { state.members[i].sets = v.slice(2).split(','); render(); };
 
 /* ---- 이벤트 ---- */
 window.setChar = (i, gc) => { state.adaptLow = false;
