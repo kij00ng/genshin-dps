@@ -1913,7 +1913,11 @@ function memberCard(m, i, res, asm) {
     </div>` : ''}
     <div class="foot2">
       <div class="subs">부옵션 <span class="tag ${m.subsSrc === 'opt' || m.subsSrc === 'kqm' ? 'cur' : ''}">${m.subsSrc === 'opt' ? 'gcsim 최적화' : m.subsSrc === 'kqm' ? 'KQM 설정' : (m.subsSrc === 'auto' ? '자동 최적화' + (m.mainsAuto === false ? ' (주옵션은 직접 고른 것)' : '') : typeof DEFS !== 'undefined' && DEFS[m.gc] && DEFS[m.gc].subw ? '기본 배분 (KQM 평균)' : '기본 배분')}</span>
-        ${Object.entries(subs).filter(([, n]) => n > 0).map(([k, n]) => `${SHORT[k]} ${n}`).join(' · ')} <span style="color:var(--tx3)" title="유동 ${GC3.LIQUID}굴림을 나눠 넣음 (한 옵션 최대 10굴림, 주옵션과 같은 옵션은 8굴림) + 10종 각 2굴림 고정">(유동 ${GC3.LIQUID}굴림 나눔)</span></div>
+        ${(() => { // 유효옵션 개수: 유동 굴림을 넣은 옵션마다 (고정 2 + 유동) — 처음 붙은 줄과 강화 굴림을 합친 수
+          const eff = Object.entries(subs).filter(([, n]) => n > 0).map(([k, n]) => [k, n + 2]);
+          const tot = eff.reduce((s, [, n]) => s + n, 0);
+          return `<b title="유효 옵션(치확·치피처럼 이 캐릭터에게 쓸모 있는 옵션)에 들어간 부옵션 개수. 옵션마다 기본 2개 + 몰아준 개수. 성유물 5부위, 부위당 약 8굴림(전체 40) 기준">유효옵 ${tot}개</b> <span style="color:var(--tx3)">(부위당 ${(tot / 5).toFixed(1)})</span>
+            · ${eff.map(([k, n]) => `${SHORT[k]} ${n}`).join(' · ')}`; })()}</div>
       <div class="btns">
         <button onclick="showWeapons(${i})">무기 순위</button>
         <button onclick="showSets(${i})">성유물 순위</button>
@@ -2302,6 +2306,8 @@ function footer() {
       무기·성유물·특성·운명의 자리 효과, 버프 지속시간, 원소 에너지, 원소 부착·반응을 프레임 단위로 처리합니다.
       치명타는 매 타격 실제로 굴리므로 여러 번 돌린 평균을 씁니다. 시드를 고정해 같은 설정은 항상 같은 숫자가 나옵니다(새 gcsim 파일 기준).<br>
     · 성유물은 KQM 표준입니다: 5성 주옵션, 부옵션 10종 각 2굴림 고정 + 유동 20굴림(한 종류 최대 10, 같은 주옵션 부위마다 2씩 감소), 굴림당 평균값.
+      성유물 5부위 × 부위당 약 8굴림 = 40굴림 중, 카드의 <b>유효옵 N개</b>는 유동 굴림을 넣은 옵션(이 캐릭터에게 쓸모 있는 옵션)에 들어간 개수입니다
+      (옵션마다 기본 2개 + 몰아준 개수). 보통 유효옵 28개 안팎, 부위당 5~6개입니다.
       <b>자동 최적화</b>가 켜져 있으면 파티를 바꿀 때마다 주옵션·부옵션을 다시 맞춥니다: 원충은 원소폭발을 기다리지 않을 만큼만,
       나머지 굴림은 같은 시드로 "스탯 +1굴림"마다 팀 DPS가 얼마나 오르는지 재서 덜 오르는 스탯에서 더 오르는 스탯으로 옮기고,
       주옵션도 바꿀 만한 후보를 실제로 바꿔 재 본 뒤 오를 때만 바꿉니다. 무기·세트·운명의 자리·파티원 버프는 gcsim이 계산하므로 자동으로 반영됩니다.<br>
