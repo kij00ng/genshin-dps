@@ -1664,24 +1664,26 @@ function render() {
         <td class="n">${(res.fieldTime[i] || 0).toFixed(1)}초</td><td class="n">${res.skills[i].toFixed(1)}회</td><td class="n">${res.bursts[i].toFixed(1)}회</td>
         <td class="n">${want != null ? (isNaN(want) ? '<span title="원소폭발이 원소 에너지가 아니라 자기 자원을 씁니다">—</span>' : want.toFixed(1) + '회') : '…'}</td><td>${short ? '<span class="tag" style="color:var(--warn);border-color:var(--warn)">원충 부족</span>' : ''}</td></tr>`; }).join('')}
       </tbody></table>
-      ${ign && isFinite_(rot.text) && res.duration && ign.duration && res.duration > ign.duration * 1.03 ? `<div class="note" style="color:var(--warn)">원소 에너지 부족: 이 로테이션은 원소폭발이 준비될 때까지 기다리기 때문에,
-        에너지가 충분할 때(${ign.duration.toFixed(1)}초)보다 <b>${(res.duration - ign.duration).toFixed(1)}초 길어졌습니다</b>. 그만큼 DPS가 낮게 나옵니다.
-        ${(() => { const cap = state.members.filter(m => m.subs && (m.subs.er || 0) >= GC3.liquidCaps(m).er);
-          const sw = cap.filter(m => m.mains.sands !== 'er');
-          return cap.length ? `원충 부옵션이 이미 상한(유동 ${GC3.liquidCaps(cap[0]).er}굴림)인 캐릭터: <b>${cap.map(m => CH[m.gc].ko).join(', ')}</b> — 부옵션만으로는 모자랍니다. 원충 시간의 모래나 원충 무기(페보니우스 등)로 바꿔 보세요.
-            ${sw.length ? `<button class="mini-btn" onclick="erSands()">${sw.map(m => CH[m.gc].ko).join(', ')} 시간의 모래를 원충으로</button>` : ''}`
-            : state.autoER === false ? `<a href="#calc">계산 조건</a>의 <b>자동 최적화</b>를 켜세요(원충을 사이클에 맞춰 채웁니다).` : `원충 시간의 모래나 원충 무기로 바꾸거나, <a href="#rotation">로테이션</a> 화면의 <b>이 설정의 장비 그대로 불러오기</b>를 쓰세요.`; })()}</div>` : ''}
       ${res.duration >= 299 && isFinite_(rot.text) ? `<div class="note" style="color:var(--warn)">로테이션이 300초 안에 끝나지 않아 300초에서 끊었습니다. 어떤 조건(예: 특정 무기·운명의 자리 효과를 기다리는 반복문)이 이 장비에서 충족되지 않는 것 같습니다. 로테이션을 직접 편집해 보세요.</div>` : ''}
-      ${(() => { if (!ign || isFinite_(rot.text)) return '';
-        // 원충 부족 캐릭터와, 그 캐릭터의 부옵션 원충 굴림 / 상한 (상한은 캐릭터마다 다르다: 시간의 모래가 원충이면 8, 아니면 10)
+      ${(() => { if (!ign || !ign.dps) return '';
+        // 원충 부족은 "에너지가 충분했다면 파티 DPS가 3% 넘게 높았을 때"만 표시한다 (원소폭발이 빠져도 DPS 차이가 작으면 숨김).
+        // 비교 대상은 에너지를 무시하고 같은 로테이션을 돌린 결과. 스커크·마비카처럼 원소폭발이 자기 자원인 캐릭터가 있으면
+        // 그 결과가 부풀려지므로 % 대신 빠진 캐릭터만 보여 준다
+        const gain = ign.dps / res.dps - 1;
+        const resBurst = state.members.some(m => NO_ENERGY_BURST.has(m.gc));
         const short = state.members.filter((m, i) => ign.bursts[i] - res.bursts[i] > 0.3);
-        if (!short.length) return '';
+        const longer = isFinite_(rot.text) && res.duration && ign.duration && res.duration > ign.duration * 1.03;
+        if (gain < 0.03 || (!short.length && !longer) || (resBurst && !short.length)) return '';
+        // 캐릭터별 부옵션 원충 굴림 / 상한 (상한은 캐릭터마다 다르다: 시간의 모래가 원충이면 8, 아니면 10)
         const info = short.map(m => `${esc(CH[m.gc].ko)} (원충 부옵션 ${(m.subs && m.subs.er) || 0} / 최대 ${GC3.liquidCaps(m).er}굴림)`).join(', ');
-        const full = short.some(m => m.subs && (m.subs.er || 0) >= GC3.liquidCaps(m).er);
-        return `<div class="note" style="color:var(--warn)">원충 부족: ${info} — 에너지만 충분하면 로테이션대로 원소폭발을 더 쓸 수 있습니다.
+        const full = short.filter(m => m.subs && (m.subs.er || 0) >= GC3.liquidCaps(m).er);
+        const sw = full.filter(m => m.mains.sands !== 'er');
+        return `<div class="note" style="color:var(--warn)">원충 부족${info ? `: ${info}` : ''} —
+          원소폭발을 다 쓸 만큼 에너지가 있었다면 ${resBurst ? '파티 DPS가 더 높았습니다' : `파티 DPS가 약 <b>${sign(gain)}</b> 높았습니다`}${longer ? ` (로테이션도 ${(res.duration - ign.duration).toFixed(1)}초 짧아짐)` : ''}.
           ${state.autoER === false ? '<a href="#calc">계산 조건</a>의 <b>자동 최적화</b>를 켜면 계산할 때 원충을 사이클에 맞춰 채웁니다.'
-            : full ? '부옵션 원충이 이미 최대라 부옵션만으로는 모자랍니다. 시간의 모래나 무기를 원충으로 바꿔 보세요.'
-            : short.every(m => m.subsSrc === 'auto') ? '원충을 더 넣으면 원소폭발은 늘지만 파티 DPS는 오히려 낮아져서 이 정도로 맞춘 것입니다.'
+            : full.length ? `부옵션 원충이 이미 최대라 부옵션만으로는 모자랍니다. 시간의 모래나 무기를 원충으로 바꿔 보세요.
+              ${sw.length ? `<button class="mini-btn" onclick="erSands()">${sw.map(m => CH[m.gc].ko).join(', ')} 시간의 모래를 원충으로</button>` : ''}`
+            : short.length && short.every(m => m.subsSrc === 'auto') ? '부옵션 원충을 더 넣으면 원소폭발은 늘지만 파티 DPS는 오히려 낮아져서 이 정도로 맞췄습니다. 시간의 모래나 무기를 원충으로 바꾸면 나아질 수 있습니다.'
             : '시간의 모래나 무기를 원충으로 바꿔 보세요.'}</div>`; })()}
       ${(() => { const w = []; state.members.forEach((m, i) => { const f = res.failed && res.failed[i]; if (!f) return;
           if (f.stamina >= 1) w.push(`${CH[m.gc].ko} 스태미나 부족 ${f.stamina.toFixed(1)}초`);
