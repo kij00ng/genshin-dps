@@ -1884,8 +1884,9 @@ function memberCard(m, i, res, asm) {
         <label style="color:${state.driver === i ? 'var(--hydro)' : 'var(--tx2)'}"><input type="radio" name="drv" ${state.driver === i ? 'checked' : ''} onchange="setCfg('driver',${i})"> 메인 딜러</label></div>` : ''}
     </div>
     <div class="fields">
-      ${f('무기', `<select onchange="setWeapon(${i},this.value)">${weapons.map(w =>
-        `<option value="${w.gc}" ${w.gc === m.weapon ? 'selected' : ''}>${esc(w.ko)}</option>`).join('')}</select>`)}
+      ${f('무기', `<select onchange="setWeapon(${i},this.value)">${[5, 4, 3, 2, 1].map(r => { const g = weapons.filter(w => w.rarity === r)
+        .sort((a, b) => a.ko.localeCompare(b.ko, 'ko'));
+        return g.length ? `<optgroup label="${r}성">${g.map(w => `<option value="${w.gc}" ${w.gc === m.weapon ? 'selected' : ''}>${esc(w.ko)}</option>`).join('')}</optgroup>` : ''; }).join('')}</select>`)}
       ${f('재련', `<select onchange="setM(${i},'refine',+this.value)">${range(1, 5).map(r => `<option value="${r}" ${r === m.refine ? 'selected' : ''}>${r}단계</option>`).join('')}</select>`)}
       ${f('운명의 자리', `<select onchange="setM(${i},'cons',+this.value)">${range(0, 6).map(n => `<option value="${n}" ${n === m.cons ? 'selected' : ''}>${n === 0 ? '명함' : n + '돌'}</option>`).join('')}</select>`)}
       ${f('성유물', `<select onchange="setSetMode(${i},this.value)"><option value="4" ${set4 ? 'selected' : ''}>4세트</option><option value="22" ${!set4 ? 'selected' : ''}>2+2세트</option></select>`)}
