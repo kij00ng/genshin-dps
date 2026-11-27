@@ -1454,7 +1454,7 @@ function rotationOf(st) {
 function gcslOf(st) {
   const rot = rotationOf(st);
   return GC3.toGcsl({ members: st.members.map(m => Object.assign({}, m, { subs: subsOf(m) })), rotation: rot.text,
-    duration: st.duration, iterations: st.iters, enemyLv: st.enemyLv, res: st.res, particles: st.particles, hpMode: isFinite_(rot.text),
+    duration: st.duration, iterations: st.iters, enemyLv: st.enemyLv, res: st.res, particles: true, hpMode: isFinite_(rot.text),
     kqmCons: rot.kind === 'kqm' && st.adaptLow ? Object.fromEntries(rot.kq.builds.filter(b => b.cons != null).map(b => [b.gc, b.cons])) : null,
     softBurst: rot.kind === 'kqm',
     burstWait: rot.kind === 'kqm' && burstModeOf(st) === 'wait',
@@ -1632,21 +1632,15 @@ function render() {
 
   let h = '';
   // 영웅 영역
+  // 팀 DPS만. 계산 전에는 "계산하기", 계산 중·오류일 때만 한 줄 상태를 보여 준다
   h += `<div class="hero"><div>
       <div class="big">${res ? fmt(res.dps) : '—'}<span class="unit">팀 DPS</span></div>
-      <div style="font-size:11.5px;color:var(--tx3);margin-top:3px">${gated
-        ? `<button class="pri" style="font-size:13px;padding:6px 16px;margin:4px 8px 0 0" onclick="calcNow()">계산하기</button>설정을 다 고른 뒤 누르세요. 바뀐 설정으로 주옵션·부옵션을 맞추고 계산합니다.`
-        : res
-        ? `gcsim ${res.iterations}회${res.seeded ? ' (고정 시드)' : ''} 평균 · 95% 범위 ±${fmt(1.96 * res.se)} · ${isFinite_(rot.text) ? '로테이션 끝까지' : state.duration + '초'}`
-        : err ? `<span style="color:var(--bad)">계산 오류: ${esc(errWhere(err, gcsl, rot))}</span>`
-        : st === 'error' ? `<span style="color:var(--bad)">gcsim을 불러오지 못했습니다: ${esc(GCPOOL.state.error || '')}</span>`
-        : `<span style="color:var(--anemo)" id="fitMsg">${st !== 'ready' ? 'gcsim 불러오는 중 (약 8MB, 처음 한 번)' : fitting ? (fit.msg || '원충 맞추는 중…') : 'gcsim 계산 중…'}</span>`}</div></div>
-    ${state.favAuto && state.favAuto.key === teamKey(state) + '|' + state.members.map(m => m.cons).join('') && !state.favAuto.reverted && !state.favAuto.pending && state.members.some(m => m.gc === state.favAuto.gc && /^favonius/.test(m.weapon))
-      ? `<div class="note" style="border:0;margin:4px 0 0;padding:0;font-size:11.5px">${esc(state.favAuto.short.map(g => CH[g].ko).join('·'))}의 원소폭발이 부옵션 원충을 상한까지 넣어도 모자라서
-        <b>${esc(CH[state.favAuto.gc].ko)}</b>에게 페보니우스 5재련을 쥐여 줬습니다 (원래 ${esc((WP[state.favAuto.from] || {}).ko || state.favAuto.from)}, 팀 DPS ${sign(state.favAuto.gain || 0)}). 무기를 직접 고르면 그대로 둡니다.</div>` : ''}
-    <div class="meta">적 <b>${state.enemyLv}레벨</b> · 기본 내성 <b>${pc(state.res)}</b> · 원소 구슬 <b>${state.particles ? '있음' : '없음'}</b><br>
-      로테이션 <b>${ROTKO[rot.kind]}</b>${rot.kind === 'assemble' ? ` · 메인 딜러 <b>${CH[state.members[state.driver].gc].ko}</b>` : ''}${res && isFinite_(rot.text) ? ` · 로테이션 1회 <b>${res.duration ? res.duration.toFixed(1) : '-'}초</b>` : ''}</div>
-    </div>`;
+      ${gated ? `<button class="pri" style="font-size:13px;padding:6px 16px;margin-top:8px" onclick="calcNow()">계산하기</button>`
+        : res ? ''
+        : `<div style="font-size:11.5px;margin-top:4px">${err ? `<span style="color:var(--bad)">계산 오류: ${esc(errWhere(err, gcsl, rot))}</span>`
+          : st === 'error' ? `<span style="color:var(--bad)">gcsim을 불러오지 못했습니다: ${esc(GCPOOL.state.error || '')}</span>`
+          : `<span style="color:var(--anemo)" id="fitMsg">${st !== 'ready' ? 'gcsim 불러오는 중…' : fitting ? (fit.msg || '주옵션·부옵션 맞추는 중…') : '계산 중…'}</span>`}</div>`}
+    </div></div>`;
 
   // 파티 카드
   const iCards = h.length;
@@ -1722,7 +1716,6 @@ function render() {
     ${num('시뮬레이션 시간', 'duration', 20, 300, 1, '초 · 끝 있는 로테이션은 끝까지')}
     ${num('반복 횟수', 'iters', 20, 1000, 10, '회')}
     <div class="row"><label>자동 최적화</label><input type="checkbox" ${state.autoER !== false ? 'checked' : ''} onchange="setAutoER(this.checked)"> <span style="font-size:11px;color:var(--tx3)">주옵션·부옵션을 시뮬레이션으로 맞춤</span></div>
-    <div class="row"><label>원소 구슬</label><input type="checkbox" ${state.particles ? 'checked' : ''} onchange="setCfg('particles',this.checked)"> <span style="font-size:11px;color:var(--tx3)">8~12초마다 1개 (KQM 표준)</span></div>
   </div></section>`;
 
   // 화면 나누기: 파티(카드) / 로테이션(시뮬레이션 요약·로테이션) / 계산 조건(조건·계산 방식 설명). 위쪽 DPS 영역은 모든 화면에 둔다
@@ -1918,7 +1911,6 @@ function memberCard(m, i, res, asm) {
         <button onclick="showWeapons(${i})">무기 순위</button>
         <button onclick="showSets(${i})">성유물 순위</button>
         <button onclick="showCons(${i})">운명의 자리</button>
-        <button onclick="showDetail(${i})" ${res ? '' : 'disabled'}>피해 내역</button>
       </div>
     </div>
     </div>
