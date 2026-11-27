@@ -72,8 +72,8 @@ h1{font-size:17px;margin:0 0 2px;font-weight:650;letter-spacing:-.2px}
   display:flex;align-items:center;justify-content:center}
 .mc .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 18%;display:block}
 .mc .art .ph{font-size:48px;font-weight:700;color:color-mix(in srgb,var(--el) 70%,#fff);margin:32px auto}
-.mc .art .share{position:absolute;top:6px;left:6px;font-size:11.5px;font-weight:650;padding:1px 7px;border-radius:999px;
-  background:color-mix(in srgb,var(--panel) 75%,transparent);color:var(--tx)}
+.mc .top .share{font-size:12.5px;font-weight:650;padding:1px 8px;border-radius:999px;font-variant-numeric:tabular-nums;
+  margin-left:-6px;background:color-mix(in srgb,var(--el) 16%,transparent);color:var(--tx)}
 .mc .body{padding:9px 12px;min-width:0}
 .mc .top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-bottom:6px}
 .mc .top .who{font-weight:650;font-size:15px}
@@ -117,7 +117,6 @@ h1{font-size:17px;margin:0 0 2px;font-weight:650;letter-spacing:-.2px}
     background:linear-gradient(90deg,color-mix(in srgb,var(--el) 45%,var(--panel)),color-mix(in srgb,var(--el) 8%,var(--panel)))}
   .mc .art img{position:static;width:84px;height:84px;object-fit:contain;margin:0 0 0 8px}
   .mc .art .ph{font-size:32px;margin:auto 0 auto 24px}
-  .mc .art .share{left:auto;right:8px}
   .mc .fields{grid-template-columns:repeat(2,minmax(0,1fr))}
   .ps img,.ps .ph{width:48px;height:48px}
   .plist{grid-template-columns:repeat(auto-fill,minmax(62px,1fr))}
@@ -1888,13 +1887,14 @@ function memberCard(m, i, res, asm) {
   const f = (label, inner) => `<div class="f"><label>${label}</label>${inner}</div>`;
   const art = ART(m.gc);
   return `<div class="card mc" style="--el:${col}">
-    <div class="art">${share != null ? `<span class="share">${pc(share)}</span>` : ''}
+    <div class="art">
       ${art ? `<img src="${art}" alt="${esc(c.ko)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph',textContent:'${esc(c.ko).slice(0, 1)}'}))">`
         : `<div class="ph">${esc(c.ko).slice(0, 1)}</div>`}</div>
     <div class="body">
     <div class="top">
       <div class="who">${esc(c.ko)}${c.est ? ' <span class="tag">추정</span>' : c.wip ? ' <span class="tag">검토 중</span>' : ''}</div>
       <div class="dps">${res ? fmt(res.per[i]) : '—'}<span>DPS</span></div>
+      ${share != null ? `<span class="share" title="파티 DPS 중 비중">${pc(share)}</span>` : ''}
       ${asm && i === 0 ? `<span class="tag" style="color:var(--el);border-color:var(--el);font-weight:700" title="자동 조립 로테이션에서 1번 칸이 메인 딜러(필드에 가장 오래 머무는 캐릭터)입니다. 순서는 파티 편성에서 바꿉니다">MAIN</span>` : ''}
     </div>
     <div class="fields">
