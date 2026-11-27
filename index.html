@@ -1197,9 +1197,13 @@ const SET_DEF = { pyro: 'crimsonwitchofflames', hydro: 'nymphsdream', electro: '
 // 캐릭터별 기본 세트. KQM DB 최다 사용(DEFS)보다 우선한다.
 // (오데트: 별빛 반응 피해를 파티 전체에 +50% 하는 용광로가 빚은 심장 — KQM 설정과 같음.
 //  베스나·산드로네도 용광로가 원소 기본 세트보다 +10%·+15% 높았다 — 자동 조립 파티 20회 비교, 2026-11-27.
-//  미탸·야에 미코: 그림자 속 산산조각 난 꿈, 발레리: 옛 왕실의 의식 — 사용자 지정, 2026-11-27)
+//  미탸·야에 미코: 그림자 속 산산조각 난 꿈, 발레리: 옛 왕실의 의식,
+//  자백·네페르: 하늘 경계가 드러난 밤, 린네아: 샛별과 달의 여명, 일루가: 달을 엮는 밤노래, 카치나: 잿더미성 용사의 두루마리,
+//  로엔: 바람이 시작되는 날(마녀의 과제 추가 효과) — 사용자 지정, 2026-11-27)
 const SET_DEF_CHAR = { odette: 'heartofthefurnace', vesna: 'heartofthefurnace', sandrone: 'heartofthefurnace',
-  mitya: 'disenchantmentindeepshadow', yaemiko: 'disenchantmentindeepshadow', valeriy: 'noblesseoblige' };
+  mitya: 'disenchantmentindeepshadow', yaemiko: 'disenchantmentindeepshadow', valeriy: 'noblesseoblige',
+  zibai: 'nightoftheskysunveiling', nefer: 'nightoftheskysunveiling', linnea: 'aubadeofmorningstarandmoon',
+  illuga: 'silkenmoonsserenade', kachina: 'scrolloftheheroofcindercity', lohen: 'adaycarvedfromrisingwinds' };
 
 const fmt = n => Math.round(n).toLocaleString('ko-KR');
 const pc = n => (n * 100).toFixed(1) + '%';
