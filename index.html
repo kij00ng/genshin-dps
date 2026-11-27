@@ -964,6 +964,45 @@ self.onmessage = async (e) => {
   } catch (err) { self.postMessage({ id: d.id, ok: false, error: String(err && err.message || err) }); }
 };`;
 
+  /* 이 브라우저에 계산 결과를 저장해 두는 곳 (IndexedDB). 같은 gcsim 설정을 다시 계산하면 저장된 결과를 쓴다
+     (새로고침 뒤에도, 순위표·원충 맞춤의 짧은 계산까지). 키는 gcsim 버전 + 설정 전체의 해시라 엔진을 다시 빌드하면 자동으로 새로 계산한다.
+     개인 브라우저 안에만 저장되고 다른 사람과 공유되지 않는다. 저장이 막힌 브라우저(사생활 보호 모드 등)에서는 그냥 계산한다 */
+  const LOCALDB = (() => {
+    let dbp = null, puts = 0;
+    const MAX = { runs: 8000, ranks: 300 };
+    const open = () => dbp || (dbp = new Promise(res => {
+      try {
+        const r = indexedDB.open('gdps-cache', 1);
+        r.onupgradeneeded = () => { const d = r.result; ['runs', 'ranks'].forEach(n => { if (!d.objectStoreNames.contains(n)) d.createObjectStore(n); }); };
+        r.onsuccess = () => res(r.result); r.onerror = () => res(null); r.onblocked = () => res(null);
+      } catch (e) { res(null); }
+    }));
+    const tx = async (store, mode, fn) => {
+      const d = await open(); if (!d) return null;
+      return new Promise(res => {
+        try { const t = d.transaction(store, mode); const req = fn(t.objectStore(store));
+          t.oncomplete = () => res(req ? req.result : null); t.onerror = t.onabort = () => res(null); } catch (e) { res(null); }
+      });
+    };
+    // 오래된 것부터 지워 개수를 MAX의 80%로
+    const prune = store => tx(store, 'readwrite', s => {
+      const all = [];
+      const c = s.openCursor();
+      c.onsuccess = () => { const cur = c.result;
+        if (cur) { all.push([cur.key, cur.value && cur.value.t || 0]); cur.continue(); return; }
+        if (all.length > MAX[store]) all.sort((a, b) => a[1] - b[1]).slice(0, all.length - Math.floor(MAX[store] * 0.8)).forEach(([k]) => s.delete(k)); };
+      return null;
+    });
+    const hash = async s => { try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+      return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); } catch (e) { return null; } };
+    return {
+      async get(store, key) { const r = await tx(store, 'readonly', s => s.get(key)); return r && r.v != null ? r.v : null; },
+      async put(store, key, v) { await tx(store, 'readwrite', s => s.put({ v, t: Date.now() }, key)); if (++puts % 200 === 0) prune(store); },
+      hash,
+    };
+  })();
+  root.LOCALDB = LOCALDB;
+
   const S = { status: 'idle', error: null, workers: [], idle: [], queue: [], seq: 0, wait: {}, cache: new Map(), listeners: [] };
   const notify = () => S.listeners.forEach(f => { try { f(S.status); } catch (e) {} });
 
@@ -1067,7 +1106,14 @@ self.onmessage = async (e) => {
   function once(k, make) {
     if (S.cache.has(k)) return Promise.resolve(S.cache.get(k));
     if (S.pending.has(k)) return S.pending.get(k);
-    const p = make().then(r => { S.cache.set(k, r); S.pending.delete(k);
+    // 이 브라우저에 저장된 결과가 있으면 그것을, 없으면 계산하고 저장
+    const p = (async () => {
+      const hk = await LOCALDB.hash((root.GCSIM_VERSION || '') + '|' + k);
+      if (hk) { const hit = await LOCALDB.get('runs', hk); if (hit) return hit; }
+      const r = await make();
+      if (hk) LOCALDB.put('runs', hk, r);
+      return r;
+    })().then(r => { S.cache.set(k, r); S.pending.delete(k);
                                  if (S.cache.size > 4000) for (const old of S.cache.keys()) { S.cache.delete(old); if (S.cache.size <= 3000) break; }
                                  return r; },
                           e => { S.pending.delete(k); throw e; });
@@ -1790,8 +1836,11 @@ const QUICK = 20;
 const RCACHE = (() => {
   const VER = 3;   // 2: 최종 후보는 파티원도 다시 맞춤 (팀 주옵션·부옵션 저장), 3: KQM 원소폭발 기다림/건너뜀 판단
   let dbp = null;
+  // Claude 아티팩트에서는 공용 저장소(모두가 같이 씀), 그 밖(github.io 등)에서는 이 브라우저의 저장소
+  const localDoc = p => ({ get: async () => { const v = await LOCALDB.get('ranks', p); return { exists: v != null, data: () => v }; },
+    set: v => LOCALDB.put('ranks', p, v) });
   const db = () => dbp || (dbp = (window.claude && typeof window.claude.use === 'function')
-    ? Promise.resolve(window.claude.use('db')).catch(() => null) : Promise.resolve(null));
+    ? Promise.resolve(window.claude.use('db')).catch(() => null) : Promise.resolve({ doc: localDoc }));
   const timeout = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]);
   const hex = async s => { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
     return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); };
