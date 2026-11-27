@@ -1340,7 +1340,7 @@ function sane(m) {
   if (!(m.cons >= 0 && m.cons <= 6)) m.cons = 0;
   // 예전 버전의 'gcsim 최적화'(opt)는 최적화 버튼이 없어져 다시 돌릴 방법이 없다 → 자동 최적화로 바꿔 장비가 바뀌면 다시 맞춘다
   if (!m.subsSrc || m.subsSrc === 'opt') m.subsSrc = m.subs ? 'auto' : 'default';
-  m.mainsAuto = true;   // 계산하기를 누르면 주옵션도 항상 다시 고른다 (예전에 직접 고른 주옵션 잠금은 풀기)
+  if (m.mainsAuto == null) m.mainsAuto = true;
   if (m.subsSrc === 'default') m.subs = null;
   return m;
 }
@@ -1955,7 +1955,7 @@ window.setChar = (i, gc) => { state.adaptLow = false;
 window.setM = (i, k, v) => { state.members[i][k] = v; render(); };
 // 무기를 바꾸면 재련도 그 무기의 기본값으로 (5성 1단계, 4성 이하 5단계) — 이전 무기의 재련이 그대로 남지 않게
 window.setWeapon = (i, gc) => { const m = state.members[i]; m.weapon = gc; m.weaponSet = true; m.refine = WP[gc] && WP[gc].rarity >= 5 ? 1 : 5; render(); };
-window.setMain = (i, slot, v) => { const m = state.members[i]; m.mains[slot] = v; if (isAuto(m)) { m.subs = null; m.subsSrc = 'default'; } else resetSubsIfCapped(i); render(); };
+window.setMain = (i, slot, v) => { const m = state.members[i]; m.mains[slot] = v; m.mainsAuto = false; if (isAuto(m)) { m.subs = null; m.subsSrc = 'default'; } else resetSubsIfCapped(i); render(); };
 window.setTalent = (i, k, v) => { state.members[i].talents[k] = v; render(); };
 window.setSetMode = (i, v) => { const m = state.members[i]; m.sets = v === '4' ? [m.sets[0]] : [m.sets[0], m.sets[1] && m.sets[1] !== m.sets[0] ? m.sets[1] : 'gladiatorsfinale']; render(); };
 window.setSet = (i, j, v) => { state.members[i].sets[j] = v; render(); };
