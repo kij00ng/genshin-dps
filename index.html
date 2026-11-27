@@ -1914,26 +1914,29 @@ function memberCard(m, i, res, asm) {
   </div>`;
 }
 const setOpts = cur => D.sets.map(s => `<option value="${s.gc}" ${s.gc === cur ? 'selected' : ''}>${esc(s.ko)}</option>`).join('');
-/* 성유물 칸 하나: "4세트" 묶음 아래 세트들, "2+2세트" 묶음 아래 2세트 효과 조합 (세트 이름 대신 효과로, 5성 세트만).
-   2세트 효과가 같으면 어느 세트든 결과가 같으므로 효과 조합마다 대표 세트 두 개를 넣는다.
+/* 성유물 칸 하나: "4세트" 묶음 아래 세트들, "2+2세트" 묶음 아래 같은 효과끼리의 조합 네 가지
+   (공격력+공격력, HP+HP, 원소 마스터리+원소 마스터리, 방어력+방어력 — 2+2는 보통 같은 옵션끼리일 때만 의미가 있다).
+   2세트 효과가 같으면 어느 세트든 결과가 같으므로 효과마다 대표 세트 두 개를 넣는다 (5성 먼저, 방어력은 5성이 하나라 4성 포함).
    값: "4:세트" 또는 "2:세트A,세트B" */
 const twoKey = gc => ((ST[gc] && ST[gc].p2) || gc).replace(/\s+/g, '');
-const TWO_ORDER = ['공격력', 'HP', '방어력', '원소마스터리', '원소충전효율', '원소피해보너스', '물리', '치명타', '일반공격', '원소전투스킬', '원소폭발', '낙하공격'];
-const twoRank = g => { const k = g.label.replace(/\s+/g, ''); const i = TWO_ORDER.findIndex(t => k.includes(t)); return i < 0 ? 99 : i; };
+const SAME2 = [['공격력+18%', '공격력'], ['HP+20%', 'HP'], ['원소마스터리+80pt', '원소 마스터리'], ['방어력+30%', '방어력']];
+function samePairs() {
+  return SAME2.map(([key, label]) => {
+    const sets = D.sets.filter(s => (s.p2 || '').replace(/\s+/g, '') === key).sort((a, b) => b.rarity - a.rarity).map(s => s.gc);
+    const p2 = sets.length ? ST[sets[0]].p2 : label;
+    return sets.length >= 2 ? { label: `${p2} + ${p2}`, sets: sets.slice(0, 2) } : null;
+  }).filter(Boolean);
+}
 function setChoiceOpts(m, c) {
   const set4 = m.sets.length === 1 || m.sets[0] === m.sets[1];
-  const groups = twoPcGroups(c).slice().sort((a, b) => twoRank(a) - twoRank(b));
   const curKey = set4 ? null : m.sets.map(twoKey).sort().join('|');
   let found = false;
-  const pairs = [];
-  groups.forEach((a, ia) => groups.slice(ia).forEach(b => {
-    const sets = a === b ? a.sets.slice(0, 2) : [a.sets[0], b.sets[0]];
-    if (sets.length < 2 || sets[0] === sets[1]) return;
-    const sel = curKey && sets.map(twoKey).sort().join('|') === curKey && !found;
+  const pairs = samePairs().map(p => {
+    const sel = curKey && p.sets.map(twoKey).sort().join('|') === curKey && !found;
     if (sel) found = true;
-    pairs.push(`<option value="2:${sets.join(',')}" ${sel ? 'selected' : ''}>${esc(a.label)} + ${esc(b.label)}</option>`);
-  }));
-  // 지금 2+2가 목록의 효과 조합으로 표현되지 않으면(내성 세트 등) 그대로 하나 넣어 둔다
+    return `<option value="2:${p.sets.join(',')}" ${sel ? 'selected' : ''}>${esc(p.label)}</option>`;
+  });
+  // 지금 2+2가 위 네 가지가 아니면(KQM 설정의 다른 조합 등) 그대로 하나 넣어 둔다
   const extra = curKey && !found ? `<option value="2:${m.sets.join(',')}" selected>${m.sets.map(g => esc((ST[g] && ST[g].p2) || g)).join(' + ')}</option>` : '';
   return `<optgroup label="4세트">${D.sets.map(s => `<option value="4:${s.gc}" ${set4 && s.gc === m.sets[0] ? 'selected' : ''}>${esc(s.ko)}</option>`).join('')}</optgroup>`
     + `<optgroup label="2+2세트">${extra}${pairs.join('')}</optgroup>`;
@@ -2253,53 +2256,15 @@ window.showWeapons = (i) => {
     [['무기', x => `${esc(x.w.ko)} <span class="tag">${x.patch.refine}재련</span>${x.circ && x.circ !== m.mains.circlet ? ` <span class="tag">왕관 ${x.circ === 'cr' ? '치확' : '치피'}</span>` : ''}`], ['부옵션', x => esc(x.w.sub || '')]],
     { kind: 'weapons' });
 };
-/* 2+2세트 후보: 2세트 효과가 같은 세트끼리 묶고(예: HP+20% = 감로빛 꽃바다·견고한 천암), 효과 하나씩의 가치를
-   "그 2세트 + 아무 효과 없는 2세트(내성)"로 짧게 재서 상위 5종류끼리의 조합만 순위에 넣는다
-   (예: 닐루는 HP 2 + HP 2가 4세트보다 높을 때가 있다). 내성·치유·보호막 2세트는 DPS와 상관없어 빼고,
-   5성 세트만 쓴다(전투광처럼 4성에만 있는 효과는 제외) */
-const TWO_SKIP = /내성|치유|보호막/;
-const NEUTRAL2 = ['thundersoother', 'lavawalker'];
-function twoPcGroups(c) {
-  const g = new Map();
-  D.sets.filter(s => s.rarity >= 5).forEach(s => {
-    const k = (s.p2 || '').replace(/\s+/g, '');
-    if (!k || TWO_SKIP.test(k)) return;
-    if (/원소피해보너스/.test(k) && !k.startsWith((c.eleKo || '') + '원소')) return;
-    if (!g.has(k)) g.set(k, { label: s.p2, sets: [] });
-    g.get(k).sets.push(s.gc);
-  });
-  return [...g.values()];
-}
-async function twoPcCands(i) {
-  const m = state.members[i], c = CH[m.gc];
-  const groups = twoPcGroups(c);
-  const base = clone(state); base.members.forEach(x => { x.subs = subsOf(x); });
-  const run = sets => { const s2 = clone(base); s2.members[i].sets = sets; return GCPOOL.quick(gcslOf(s2), 30, 'rank').then(r => r.dps, () => null); };
-  const zero = await run(NEUTRAL2.slice());
-  const vals = await Promise.all(groups.map(gr => run([gr.sets[0], NEUTRAL2[0]])));
-  const top = groups.map((gr, j) => ({ gr, v: vals[j] })).filter(x => x.v != null && zero != null && x.v > zero)
-    .sort((a, b) => b.v - a.v).slice(0, 5).map(x => x.gr);
-  const out = [];
-  top.forEach((a, ia) => top.slice(ia).forEach(b => {
-    const sets = a === b ? a.sets.slice(0, 2) : [a.sets[0], b.sets[0]];
-    if (sets.length < 2 || sets[0] === sets[1]) return;
-    out.push({ s: { ko: `${a.label} + ${b.label}`, p4: '' }, two: true, patch: { sets } });
-  }));
-  return out;
-}
 window.showSets = async (i) => {
   const m = state.members[i], c = CH[m.gc];
   const title = `${c.ko} — 성유물 순위`;
   const cands = D.sets.filter(s => s.rarity >= 5).map(s => ({ s, patch: { sets: [s.gc] } }));
-  const cur2 = m.sets.length === 2 && m.sets[0] !== m.sets[1] ? m.sets.slice().sort().join() : null;
-  let two = [];
-  if (GCPOOL.state.status === 'ready') {
-    modal(title, '2세트 효과마다 가치를 짧게 재서 2+2 조합 후보를 고르는 중…', '');
-    try { two = await twoPcCands(i); } catch (e) { two = []; }
-  }
-  two.filter(x => x.patch.sets.slice().sort().join() !== cur2).forEach(x => cands.push(x));
+  const cur2 = m.sets.length === 2 && m.sets[0] !== m.sets[1] ? m.sets.map(twoKey).sort().join('|') : null;
+  samePairs().filter(p => p.sets.map(twoKey).sort().join('|') !== cur2)
+    .forEach(p => cands.push({ s: { ko: p.label, p4: '' }, two: true, patch: { sets: p.sets.slice() } }));
   if (cur2) cands.unshift({ s: { ko: m.sets.map(g => ST[g].p2 || ST[g].ko).join(' + '), p4: '' }, patch: { sets: m.sets.slice() } });
-  rankRun(i, cands, title, rankSub() + ' 2+2세트는 2세트 효과 하나씩의 가치를 먼저 재서 상위 다섯 가지끼리의 조합만 비교합니다(내성·치유·보호막 2세트 제외).',
+  rankRun(i, cands, title, rankSub() + ' 2+2세트는 같은 효과끼리(공격력·HP·원소 마스터리·방어력)만 비교합니다.',
     [['세트', x => esc(x.s.ko)]], { kind: 'sets' });
 };
 window.showCons = (i) => {
