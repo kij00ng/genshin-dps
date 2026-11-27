@@ -1830,12 +1830,13 @@ function portrait(gc) {
 /* 파티 편성: 카드 위에 지금 파티를 작게 보여 주고, "파티 편성"을 누르면 인게임 파티 설정처럼
    1~4번 칸을 고른 뒤 원소별로 나열된 캐릭터를 눌러 넣는다. 이미 파티에 있는 캐릭터를 누르면 고른 칸과 자리를 바꾼다.
    파티에 남는 캐릭터는 장비를 그대로 유지하고, 새로 들어온 캐릭터만 기본 장비로 시작한다 */
+// 위쪽 줄의 캐릭터를 누르면 그 칸을 바꾸는 단계로 바로 편성 창이 열린다. 편성 창은 "닫기"를 누르면 그대로 적용된다
 function partyBar() {
-  return `<div class="partybar">${state.members.map((m, i) => `<span class="pmini" style="--el:${eleCol(m.gc)}">${portrait(m.gc)}${i + 1}. ${esc(CH[m.gc].ko)}</span>`).join('')}
-    <button class="pri" style="font-size:12.5px;padding:6px 14px" onclick="openParty()">파티 편성</button></div>`;
+  return `<div class="partybar">${state.members.map((m, i) => `<button class="pmini" style="--el:${eleCol(m.gc)}" onclick="openParty(${i})" title="${i + 1}번 칸 바꾸기">${portrait(m.gc)}${i + 1}. ${esc(CH[m.gc].ko)}</button>`).join('')}
+    <button class="pri" style="font-size:12.5px;padding:6px 14px" onclick="openParty(0)">파티 편성</button></div>`;
 }
 let PICK = null;
-window.openParty = () => { PICK = { draft: state.members.map(m => m.gc), slot: 0 }; drawParty(false); };
+window.openParty = (slot) => { PICK = { draft: state.members.map(m => m.gc), slot: slot || 0 }; drawParty(false); };
 function drawParty(keep) {
   const d = PICK.draft;
   const slots = d.map((gc, i) => `<button class="ps ${i === PICK.slot ? 'on' : ''}" style="--el:${eleCol(gc)}" onclick="pickSlot(${i})">
@@ -1847,8 +1848,8 @@ function drawParty(keep) {
       return `<button class="pc ${k >= 0 ? 'sel' : ''}" style="--el:${ELE[e][1]}" title="${esc(c.ko)}${c.est ? ' (추정)' : c.wip ? ' (검토 중)' : ''}" onclick="pickChar('${c.gc}')">
         ${k >= 0 ? `<span class="n">${k + 1}</span>` : ''}${portrait(c.gc)}<span class="nm">${esc(c.ko)}</span></button>`; }).join('')}</div></div>`;
   }).join('');
-  modal('파티 편성', `<b>${PICK.slot + 1}번 칸</b>에 넣을 캐릭터를 누르세요. 칸을 눌러 바꿀 칸을 고릅니다. 파티에 있는 캐릭터를 누르면 고른 칸과 자리를 바꿉니다.`,
-    `<div class="pslots">${slots}</div><div class="row" style="gap:6px;margin:4px 0 2px"><button class="pri" onclick="applyParty()">이 파티로</button><button onclick="closeModal()">취소</button></div>${groups}`, keep);
+  modal('파티 편성', `<b>${PICK.slot + 1}번 칸</b>에 넣을 캐릭터를 누르세요. 칸을 눌러 바꿀 칸을 고르고, 파티에 있는 캐릭터를 누르면 고른 칸과 자리를 바꿉니다. 다 고른 뒤 <b>닫기</b>를 누르면 적용됩니다.`,
+    `<div class="pslots">${slots}</div>${groups}`, keep);
 }
 window.pickSlot = i => { PICK.slot = i; drawParty(true); };
 window.pickChar = gc => {
@@ -1857,9 +1858,10 @@ window.pickChar = gc => {
   PICK.slot = (s + 1) % 4;
   drawParty(true);
 };
-window.applyParty = () => {
+function applyParty(draft) {
   const old = state.members, drv = old[state.driver] && old[state.driver].gc;
-  const ms = PICK.draft.map(gc => old.find(m => m.gc === gc) || newMember(gc));
+  if (draft.join() === old.map(m => m.gc).join()) return false;   // 바뀐 게 없으면 그대로
+  const ms = draft.map(gc => old.find(m => m.gc === gc) || newMember(gc));
   if (ms.map(m => m.gc).slice().sort().join() !== old.map(m => m.gc).slice().sort().join()) {
     state.adaptLow = false;
     if (state.rotMode === 'custom') state.rotMode = 'auto';
@@ -1867,8 +1869,8 @@ window.applyParty = () => {
   state.members = ms;
   const di = ms.findIndex(m => m.gc === drv);
   state.driver = di >= 0 ? di : 0;
-  PICK = null; closeModal(); render();
-};
+  return true;
+}
 // asm: 자동 조립 로테이션일 때만 칸 순서·메인 딜러가 로테이션에 영향을 주므로 그때만 보여 준다
 function memberCard(m, i, res, asm) {
   const c = CH[m.gc];
@@ -2003,7 +2005,9 @@ function modal(title, sub, body, keep) {
   if (!keep) document.querySelector('#modal .inner').scrollTop = 0;
   else { const s2 = document.querySelector('#modal .scroll'); if (s2) s2.scrollTop = prev; }
 }
-window.closeModal = () => { window._rank = null; GCPOOL.cancelQueued('rank'); document.getElementById('modal').classList.remove('on'); };
+window.closeModal = () => { window._rank = null; GCPOOL.cancelQueued('rank'); document.getElementById('modal').classList.remove('on');
+  // 파티 편성 창을 닫으면 고른 파티를 적용한다
+  if (PICK) { const d = PICK.draft; PICK = null; if (applyParty(d)) render(); } };
 
 /* 순위: 후보마다 한 칸만 바꾼 파티를 gcsim으로 돌린다. 부옵션은 지금 것 그대로(인게임에서 바꿔 끼우는 것과 같음).
    모든 후보가 같은 시드를 쓰고, 결과는 저장되므로 적용하면 표의 숫자가 그대로 나온다. */
