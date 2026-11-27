@@ -218,7 +218,6 @@ select option:disabled{color:var(--tx3)}
 </head>
 <body>
 <div class="wrap">
-<h1>원신 파티 DPS 분석</h1>
 <div id="app"></div>
 </div>
 <div class="modal" id="modal"><div class="inner">
@@ -1803,7 +1802,9 @@ function rxKo(k) {
   const E = { pyro: '불', hydro: '물', electro: '번개', cryo: '얼음', dendro: '풀', anemo: '바람', geo: '바위' };
   const R = { swirl: '확산', crystallize: '결정', vaporize: '증발', melt: '융해', overload: '과부하', superconduct: '초전도',
     electrocharged: '감전', frozen: '빙결', bloom: '개화', hyperbloom: '만개', burgeon: '발화', burning: '연소', quicken: '촉진',
-    aggravate: '발산', spread: '만연', shatter: '쇄빙', lunarbloom: '달 개화', lunarcharged: '달 감전', lunarcrystallize: '달 결정' };
+    aggravate: '발산', spread: '만연', shatter: '쇄빙', lunarbloom: '달 개화', lunarcharged: '달 감전', lunarcrystallize: '달 결정',
+    freeze: '빙결', 'freeze-extend': '빙결 연장', 'stellar-conduct': '별 초전도', 'stellar-swirl': '별 확산' };
+  if (R[k]) return R[k];
   const [a, b] = k.split('-');
   return (b && E[b] ? E[b] + ' 원소 ' : '') + (R[a] || a);
 }
