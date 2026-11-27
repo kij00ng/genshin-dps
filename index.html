@@ -1270,14 +1270,18 @@ const SET_DEF = { pyro: 'crimsonwitchofflames', hydro: 'nymphsdream', electro: '
   anemo: 'viridescentvenerer', geo: 'huskofopulentdreams', dendro: 'deepwoodmemories' };
 // 캐릭터별 기본 세트. KQM DB 최다 사용(DEFS)보다 우선한다.
 // (오데트: 별빛 반응 피해를 파티 전체에 +50% 하는 용광로가 빚은 심장 — KQM 설정과 같음.
-//  베스나·산드로네도 용광로가 원소 기본 세트보다 +10%·+15% 높았다 — 자동 조립 파티 20회 비교, 2026-11-27.
-//  미탸·야에 미코: 그림자 속 산산조각 난 꿈, 발레리: 옛 왕실의 의식,
+//  베스나도 용광로가 원소 기본 세트보다 +10% 높았다 — 자동 조립 파티 20회 비교, 2026-11-27.
+//  미탸·야에 미코·산드로네: 그림자 속 산산조각 난 꿈, 발레리: 옛 왕실의 의식,
 //  자백·네페르: 하늘 경계가 드러난 밤, 린네아: 샛별과 달의 여명, 일루가: 달을 엮는 밤노래, 카치나: 잿더미성 용사의 두루마리,
 //  로엔: 바람이 시작되는 날(마녀의 과제 추가 효과) — 사용자 지정, 2026-11-27)
-const SET_DEF_CHAR = { odette: 'heartofthefurnace', vesna: 'heartofthefurnace', sandrone: 'heartofthefurnace',
+const SET_DEF_CHAR = { odette: 'heartofthefurnace', vesna: 'heartofthefurnace', sandrone: 'disenchantmentindeepshadow',
   mitya: 'disenchantmentindeepshadow', yaemiko: 'disenchantmentindeepshadow', valeriy: 'noblesseoblige',
   zibai: 'nightoftheskysunveiling', nefer: 'nightoftheskysunveiling', linnea: 'aubadeofmorningstarandmoon',
   illuga: 'silkenmoonsserenade', kachina: 'scrolloftheheroofcindercity', lohen: 'adaycarvedfromrisingwinds' };
+// 캐릭터별 기본 주옵션 (계산 전 출발점. "계산하기"를 누르면 자동 최적화가 다시 고른다).
+// 산드로네·오데트: 피해 대부분이 별 초전도(원소 피해 보너스가 붙지 않는 직접 피해)라 공격력 성배가 높다 —
+// 산드로네 116.4k(공격력) vs 111.6k(얼음 피해), 파티 전체 자동 맞춤도 둘 다 공격력 성배를 고름, 2026-11-28
+const MAINS_DEF_CHAR = { sandrone: { goblet: 'atk%' }, odette: { goblet: 'atk%' } };
 
 const fmt = n => Math.round(n).toLocaleString('ko-KR');
 const pc = n => (n * 100).toFixed(1) + '%';
@@ -1306,6 +1310,7 @@ function newMember(gc) {
     m.fromDb = true;
   }
   if (SET_DEF_CHAR[gc]) m.sets = [SET_DEF_CHAR[gc]];
+  if (MAINS_DEF_CHAR[gc]) m.mains = Object.assign({}, m.mains, MAINS_DEF_CHAR[gc]);
   // 치명 왕관 첫 추정: 무기 부옵션이 치확이면 치피 왕관, 치피면 치확 왕관 (원충 맞출 때 실제로 둘 다 돌려 보고 정함)
   m.mainsAuto = true;
   if (['cr', 'cd'].includes(m.mains.circlet) && WP[m.weapon]) {
