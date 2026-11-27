@@ -1647,6 +1647,7 @@ function render() {
   h += '</div>';
 
   // gcsim 요약
+  const iSum = h.length;
   if (res) {
     const rx = res.reactions || {};
     const rxs = Object.entries(rx).filter(([, v]) => v >= 0.5).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${esc(rxKo(k))} <b>${v.toFixed(1)}회</b>`).join(' · ');
@@ -1663,10 +1664,10 @@ function render() {
           const sw = cap.filter(m => m.mains.sands !== 'er');
           return cap.length ? `원충 부옵션이 이미 상한(유동 ${GC3.liquidCaps(cap[0]).er}굴림)인 캐릭터: <b>${cap.map(m => CH[m.gc].ko).join(', ')}</b> — 부옵션만으로는 모자랍니다. 원충 시간의 모래나 원충 무기(페보니우스 등)로 바꿔 보세요.
             ${sw.length ? `<button class="mini-btn" onclick="erSands()">${sw.map(m => CH[m.gc].ko).join(', ')} 시간의 모래를 원충으로</button>` : ''}`
-            : state.autoER === false ? `계산 조건의 <b>자동 최적화</b>를 켜세요(원충을 사이클에 맞춰 채웁니다).` : `원충 시간의 모래나 원충 무기로 바꾸거나, <a href="#rotation">로테이션</a> 화면의 <b>이 설정의 장비 그대로 불러오기</b>를 쓰세요.`; })()}</div>` : ''}
+            : state.autoER === false ? `<a href="#calc">계산 조건</a>의 <b>자동 최적화</b>를 켜세요(원충을 사이클에 맞춰 채웁니다).` : `원충 시간의 모래나 원충 무기로 바꾸거나, <a href="#rotation">로테이션</a> 화면의 <b>이 설정의 장비 그대로 불러오기</b>를 쓰세요.`; })()}</div>` : ''}
       ${res.duration >= 299 && isFinite_(rot.text) ? `<div class="note" style="color:var(--warn)">로테이션이 300초 안에 끝나지 않아 300초에서 끊었습니다. 어떤 조건(예: 특정 무기·운명의 자리 효과를 기다리는 반복문)이 이 장비에서 충족되지 않는 것 같습니다. 로테이션을 직접 편집해 보세요.</div>` : ''}
       ${ign && !isFinite_(rot.text) && state.members.some((m, i) => ign.bursts[i] - res.bursts[i] > 0.3) ? `<div class="note" style="color:var(--warn)">원충 부족: 에너지만 충분하면 로테이션대로 원소폭발을 더 쓸 수 있는 캐릭터가 있습니다.
-        ${state.autoER === false ? '계산 조건의 <b>자동 최적화</b>를 켜면 원충을 사이클에 맞춰 채웁니다. ' : ''}자동 최적화 후에도 남아 있으면 부옵션 원충 상한(유동 10굴림)을 넘는 것이니, 시간의 모래나 무기를 원충으로 바꿔 보세요.</div>` : ''}
+        ${state.autoER === false ? '<a href="#calc">계산 조건</a>의 <b>자동 최적화</b>를 켜면 원충을 사이클에 맞춰 채웁니다. ' : ''}자동 최적화 후에도 남아 있으면 부옵션 원충 상한(유동 10굴림)을 넘는 것이니, 시간의 모래나 무기를 원충으로 바꿔 보세요.</div>` : ''}
       ${(() => { const w = []; state.members.forEach((m, i) => { const f = res.failed && res.failed[i]; if (!f) return;
           if (f.stamina >= 1) w.push(`${CH[m.gc].ko} 스태미나 부족 ${f.stamina.toFixed(1)}초`);
           if (f.skill >= 1) w.push(`${CH[m.gc].ko} 원소전투 스킬 쿨타임 ${f.skill.toFixed(1)}초`);
@@ -1715,14 +1716,14 @@ function render() {
     <div class="row"><label>원소 구슬</label><input type="checkbox" ${state.particles ? 'checked' : ''} onchange="setCfg('particles',this.checked)"> <span style="font-size:11px;color:var(--tx3)">8~12초마다 1개 (KQM 표준)</span></div>
   </div></section>`;
 
-  // 화면 나누기: 파티(카드·요약·계산 조건) / 로테이션 / 설명. 위쪽 DPS 영역은 모든 화면에 둔다
+  // 화면 나누기: 파티(카드) / 로테이션(시뮬레이션 요약·로테이션) / 계산 조건(조건·계산 방식 설명). 위쪽 DPS 영역은 모든 화면에 둔다
   const view = curView();
-  const hero = h.slice(0, iCards), party = h.slice(iCards, iRot), rotSec = h.slice(iRot, iCfg), cfg = h.slice(iCfg);
+  const hero = h.slice(0, iCards), party = h.slice(iCards, iSum), summary = h.slice(iSum, iRot), rotSec = h.slice(iRot, iCfg), cfg = h.slice(iCfg);
   document.getElementById('app').innerHTML = navBar(view) + hero
-    + (view === 'rotation' ? rotSec : view === 'about' ? footer() : party + cfg);
+    + (view === 'rotation' ? summary + rotSec : view === 'calc' ? cfg + footer() : party);
 }
 /* 화면 전환: 주소의 #rotation, #about (뒤로 가기로 돌아올 수 있게) */
-const VIEWS = [['party', '파티'], ['rotation', '로테이션'], ['about', '설명']];
+const VIEWS = [['party', '파티'], ['rotation', '로테이션'], ['calc', '계산 조건']];
 const curView = () => { const v = location.hash.slice(1); return VIEWS.some(([k]) => k === v) ? v : 'party'; };
 const navBar = v => `<nav class="nav">${VIEWS.map(([k, label]) =>
   `<a href="#${k === 'party' ? '' : k}" class="${k === v ? 'on' : ''}">${label}</a>`).join('')}</nav>`;
