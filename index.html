@@ -60,18 +60,43 @@ h1{font-size:17px;margin:0 0 2px;font-weight:650;letter-spacing:-.2px}
 
 /* 파티 카드: 캐릭터마다 가로로 긴 줄 하나 (위아래로 네 줄). 카드는 원소색, 왼쪽 일러스트, 오른쪽 설정 칸 */
 .grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
-.card.mc{--el:#888;display:grid;grid-template-columns:168px minmax(0,1fr);padding:0;overflow:hidden;
+.card.mc{--el:#888;display:grid;grid-template-columns:128px minmax(0,1fr);padding:0;overflow:hidden;
   border:1px solid color-mix(in srgb,var(--el) 45%,var(--line));border-left:4px solid var(--el);
   background:linear-gradient(90deg,color-mix(in srgb,var(--el) 18%,var(--panel)) 0,var(--panel) 42%)}
-.mc .art{position:relative;background:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--el) 55%,transparent),color-mix(in srgb,var(--el) 14%,var(--panel)) 72%);
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-height:190px}
-.mc .art img{width:100%;max-width:168px;aspect-ratio:1;object-fit:contain;display:block;margin-top:auto}
-.mc .art .ph{font-size:56px;font-weight:700;color:color-mix(in srgb,var(--el) 70%,#fff);margin:auto}
-.mc .art .share{position:absolute;top:8px;left:8px;font-size:12px;font-weight:650;padding:2px 8px;border-radius:999px;
+/* 초상화 칸: 카드 높이에 맞춰 늘어나지 않고 위쪽에 고정 */
+.mc .art{position:relative;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--el) 55%,transparent),color-mix(in srgb,var(--el) 14%,var(--panel)) 72%);
+  display:flex;align-items:flex-start;justify-content:center}
+.mc .art img{width:128px;height:128px;object-fit:contain;display:block}
+.mc .art .ph{font-size:48px;font-weight:700;color:color-mix(in srgb,var(--el) 70%,#fff);margin:32px auto}
+.mc .art .share{position:absolute;top:6px;left:6px;font-size:11.5px;font-weight:650;padding:1px 7px;border-radius:999px;
   background:color-mix(in srgb,var(--panel) 75%,transparent);color:var(--tx)}
-.mc .body{padding:12px 14px;min-width:0}
-.mc .top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-bottom:8px}
-.mc .top select.who{font-weight:650;font-size:14.5px;width:auto;min-width:150px;max-width:260px}
+.mc .body{padding:9px 12px;min-width:0}
+.mc .top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-bottom:6px}
+.mc .top .who{font-weight:650;font-size:15px}
+.mc .foot2{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px;margin-top:7px;font-size:11.5px;color:var(--tx2)}
+.mc .foot2 .btns{margin-top:0}
+/* 파티 편성: 카드 위의 줄 + 고르기 창 (원소별 초상화, 1~4번 칸) */
+.partybar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
+.partybar .pmini{display:flex;align-items:center;gap:6px;white-space:nowrap;flex:none;padding:3px 10px 3px 3px;border-radius:999px;font-size:12.5px;
+  border:1px solid color-mix(in srgb,var(--el) 50%,var(--line));background:color-mix(in srgb,var(--el) 14%,var(--panel))}
+.partybar .pmini img,.partybar .pmini .ph{width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--el) 35%,var(--panel));object-fit:contain}
+.partybar .pmini .ph{display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+.pslots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0 6px}
+.ps{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border:2px solid var(--line);border-radius:12px;
+  background:color-mix(in srgb,var(--el) 18%,var(--panel2));color:var(--tx);cursor:pointer}
+.ps.on{border-color:var(--acc);box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 35%,transparent)}
+.ps img,.ps .ph{width:64px;height:64px;object-fit:contain}
+.ps .ph,.pc .ph{display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px}
+.ps .n,.pc .n{position:absolute;top:3px;left:5px;font-weight:800;font-size:13px;color:var(--acc)}
+.ps .nm,.pc .nm{font-size:11.5px;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.pgroup h4{margin:12px 0 6px;font-size:12.5px}
+.plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px}
+.pc{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 2px 3px;border:1px solid var(--line);border-radius:10px;
+  background:color-mix(in srgb,var(--el) 12%,var(--panel2));color:var(--tx);cursor:pointer;min-width:0}
+.pc:hover{border-color:var(--el)}
+.pc.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc)}
+.pc img,.pc .ph{width:52px;height:52px;object-fit:contain}
+.pc .nm{font-size:10.5px}
 .mc .top .dps{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
 .mc .top .dps span{font-size:11.5px;color:var(--tx3);font-weight:400;margin-left:5px}
 .mc .top .slot{font-size:11.5px;color:var(--tx3);margin-left:auto;display:flex;align-items:center;gap:6px}
@@ -84,12 +109,15 @@ h1{font-size:17px;margin:0 0 2px;font-weight:650;letter-spacing:-.2px}
 /* 휴대폰: 초상화를 카드 맨 위 띠로, 설정 칸은 두 줄씩 */
 @media (max-width:639px){
   .card.mc{grid-template-columns:minmax(0,1fr)}
-  .mc .art{flex-direction:row;justify-content:flex-start;align-items:flex-end;min-height:0;height:96px;
+  .mc .art{justify-content:flex-start;align-items:flex-end;height:84px;
     background:linear-gradient(90deg,color-mix(in srgb,var(--el) 45%,var(--panel)),color-mix(in srgb,var(--el) 8%,var(--panel)))}
-  .mc .art img{width:96px;margin:0 0 0 8px}
-  .mc .art .ph{font-size:36px;margin:auto 0 auto 24px}
+  .mc .art img{width:84px;height:84px;margin:0 0 0 8px}
+  .mc .art .ph{font-size:32px;margin:auto 0 auto 24px}
   .mc .art .share{left:auto;right:8px}
   .mc .fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ps img,.ps .ph{width:48px;height:48px}
+  .plist{grid-template-columns:repeat(auto-fill,minmax(62px,1fr))}
+  .pc img,.pc .ph{width:44px;height:44px}
 }
 /* 화면 전환 단추 (파티 / 로테이션 / 설명) */
 .nav{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
@@ -1299,7 +1327,7 @@ function sane(m) {
   if (!(m.refine >= 1 && m.refine <= 5)) m.refine = d.refine;
   if (!Array.isArray(m.sets) || !m.sets.length || !m.sets.every(g => ST[g])) m.sets = d.sets;
   if (!m.mains || !SANDS.includes(m.mains.sands) || !CIRCLET.includes(m.mains.circlet) || !/%$|^em$/.test(m.mains.goblet || '')) m.mains = d.mains;
-  if (!m.talents) m.talents = d.talents;
+  m.talents = { na: 10, skill: 10, burst: 10 };   // 특성은 모두 10으로 가정 (선택 칸 없음)
   if (!(m.cons >= 0 && m.cons <= 6)) m.cons = 0;
   // 예전 버전의 'gcsim 최적화'(opt)는 최적화 버튼이 없어져 다시 돌릴 방법이 없다 → 자동 최적화로 바꿔 장비가 바뀌면 다시 맞춘다
   if (!m.subsSrc || m.subsSrc === 'opt') m.subsSrc = m.subs ? 'auto' : 'default';
@@ -1613,6 +1641,7 @@ function render() {
 
   // 파티 카드
   const iCards = h.length;
+  h += partyBar();
   h += '<div class="grid">';
   state.members.forEach((m, i) => { h += memberCard(m, i, res, rot.kind === 'assemble'); });
   h += '</div>';
@@ -1746,7 +1775,7 @@ window.applyKqmBuild = () => {
     if (four) m.sets = [four[0]];
     else if (sets.length >= 2) m.sets = [sets[0][0], sets[1][0]];
     if (b.cons != null) m.cons = b.cons;
-    if (b.talents) m.talents = { na: Math.min(10, b.talents.na), skill: Math.min(10, b.talents.skill), burst: Math.min(10, b.talents.burst) };
+    // 특성은 모두 10으로 가정하므로 KQM 설정의 특성 레벨은 가져오지 않는다
     if (b.mains && SANDS.includes(b.mains.sands) && CIRCLET.includes(b.mains.circlet) && /%$|^em$/.test(b.mains.goblet || '') && b.mains.goblet !== 'heal%') m.mains = Object.assign({}, b.mains);
     if (b.subs) { m.subs = Object.assign({}, b.subs); m.subsSrc = 'kqm'; } else { m.subs = null; m.subsSrc = 'default'; }
   }
@@ -1781,6 +1810,55 @@ function charOptions(cur) {
   }
   return o;
 }
+/* 초상화 하나 (불러오지 못하면 원소색 바탕에 이름 첫 글자) */
+const eleCol = gc => { const c = CH[gc]; return c && ELE[c.ele] ? ELE[c.ele][1] : '#888'; };
+function portrait(gc) {
+  const c = CH[gc], a = ART(gc), ch = esc(c.ko).slice(0, 1);
+  return a ? `<img src="${a}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph',textContent:'${ch}'}))">`
+    : `<div class="ph">${ch}</div>`;
+}
+/* 파티 편성: 카드 위에 지금 파티를 작게 보여 주고, "파티 편성"을 누르면 인게임 파티 설정처럼
+   1~4번 칸을 고른 뒤 원소별로 나열된 캐릭터를 눌러 넣는다. 이미 파티에 있는 캐릭터를 누르면 고른 칸과 자리를 바꾼다.
+   파티에 남는 캐릭터는 장비를 그대로 유지하고, 새로 들어온 캐릭터만 기본 장비로 시작한다 */
+function partyBar() {
+  return `<div class="partybar">${state.members.map((m, i) => `<span class="pmini" style="--el:${eleCol(m.gc)}">${portrait(m.gc)}${i + 1}. ${esc(CH[m.gc].ko)}</span>`).join('')}
+    <button class="pri" style="font-size:12.5px;padding:6px 14px" onclick="openParty()">파티 편성</button></div>`;
+}
+let PICK = null;
+window.openParty = () => { PICK = { draft: state.members.map(m => m.gc), slot: 0 }; drawParty(false); };
+function drawParty(keep) {
+  const d = PICK.draft;
+  const slots = d.map((gc, i) => `<button class="ps ${i === PICK.slot ? 'on' : ''}" style="--el:${eleCol(gc)}" onclick="pickSlot(${i})">
+    <span class="n">${i + 1}</span>${portrait(gc)}<span class="nm">${esc(CH[gc].ko)}</span></button>`).join('');
+  const byRarity = (a, b) => b.rarity - a.rarity || a.ko.localeCompare(b.ko, 'ko');
+  const groups = ELE_ORDER.map(e => {
+    const list = D.chars.filter(c => c.ele === e && c.gc && CH[c.gc]).sort(byRarity);
+    return `<div class="pgroup"><h4 style="color:${ELE[e][1]}">${ELE[e][0]}</h4><div class="plist">${list.map(c => { const k = d.indexOf(c.gc);
+      return `<button class="pc ${k >= 0 ? 'sel' : ''}" style="--el:${ELE[e][1]}" title="${esc(c.ko)}${c.est ? ' (추정)' : c.wip ? ' (검토 중)' : ''}" onclick="pickChar('${c.gc}')">
+        ${k >= 0 ? `<span class="n">${k + 1}</span>` : ''}${portrait(c.gc)}<span class="nm">${esc(c.ko)}</span></button>`; }).join('')}</div></div>`;
+  }).join('');
+  modal('파티 편성', `<b>${PICK.slot + 1}번 칸</b>에 넣을 캐릭터를 누르세요. 칸을 눌러 바꿀 칸을 고릅니다. 파티에 있는 캐릭터를 누르면 고른 칸과 자리를 바꿉니다.`,
+    `<div class="pslots">${slots}</div><div class="row" style="gap:6px;margin:4px 0 2px"><button class="pri" onclick="applyParty()">이 파티로</button><button onclick="closeModal()">취소</button></div>${groups}`, keep);
+}
+window.pickSlot = i => { PICK.slot = i; drawParty(true); };
+window.pickChar = gc => {
+  const d = PICK.draft, s = PICK.slot, k = d.indexOf(gc);
+  if (k >= 0 && k !== s) [d[k], d[s]] = [d[s], d[k]]; else d[s] = gc;
+  PICK.slot = (s + 1) % 4;
+  drawParty(true);
+};
+window.applyParty = () => {
+  const old = state.members, drv = old[state.driver] && old[state.driver].gc;
+  const ms = PICK.draft.map(gc => old.find(m => m.gc === gc) || newMember(gc));
+  if (ms.map(m => m.gc).slice().sort().join() !== old.map(m => m.gc).slice().sort().join()) {
+    state.adaptLow = false;
+    if (state.rotMode === 'custom') state.rotMode = 'auto';
+  }
+  state.members = ms;
+  const di = ms.findIndex(m => m.gc === drv);
+  state.driver = di >= 0 ? di : 0;
+  PICK = null; closeModal(); render();
+};
 // asm: 자동 조립 로테이션일 때만 칸 순서·메인 딜러가 로테이션에 영향을 주므로 그때만 보여 준다
 function memberCard(m, i, res, asm) {
   const c = CH[m.gc];
@@ -1800,7 +1878,7 @@ function memberCard(m, i, res, asm) {
         : `<div class="ph">${esc(c.ko).slice(0, 1)}</div>`}</div>
     <div class="body">
     <div class="top">
-      <select class="who" onchange="setChar(${i},this.value)">${charOptions(m.gc)}</select>
+      <div class="who">${esc(c.ko)}${c.est ? ' <span class="tag">추정</span>' : c.wip ? ' <span class="tag">검토 중</span>' : ''}</div>
       <div class="dps">${res ? fmt(res.per[i]) : '—'}<span>DPS</span></div>
       ${asm ? `<div class="slot">${i + 1}번 칸 <button class="mini-btn" ${i === 0 ? 'disabled' : ''} onclick="moveSlot(${i},-1)">▲</button><button class="mini-btn" ${i === 3 ? 'disabled' : ''} onclick="moveSlot(${i},1)">▼</button>
         <label style="color:${state.driver === i ? 'var(--hydro)' : 'var(--tx2)'}"><input type="radio" name="drv" ${state.driver === i ? 'checked' : ''} onchange="setCfg('driver',${i})"> 메인 딜러</label></div>` : ''}
@@ -1810,8 +1888,6 @@ function memberCard(m, i, res, asm) {
         `<option value="${w.gc}" ${w.gc === m.weapon ? 'selected' : ''}>${esc(w.ko)}</option>`).join('')}</select>`)}
       ${f('재련', `<select onchange="setM(${i},'refine',+this.value)">${range(1, 5).map(r => `<option value="${r}" ${r === m.refine ? 'selected' : ''}>${r}단계</option>`).join('')}</select>`)}
       ${f('운명의 자리', `<select onchange="setM(${i},'cons',+this.value)">${range(0, 6).map(n => `<option value="${n}" ${n === m.cons ? 'selected' : ''}>${n === 0 ? '명함' : n + '돌'}</option>`).join('')}</select>`)}
-      ${f('특성 (일반 · 스킬 · 폭발)', `<div class="tri">${['na', 'skill', 'burst'].map(k =>
-        `<select onchange="setTalent(${i},'${k}',+this.value)">${range(1, 10).map(l => `<option ${l === m.talents[k] ? 'selected' : ''}>${l}</option>`).join('')}</select>`).join('')}</div>`)}
       ${f('성유물', `<select onchange="setSetMode(${i},this.value)"><option value="4" ${set4 ? 'selected' : ''}>4세트</option><option value="22" ${!set4 ? 'selected' : ''}>2+2세트</option></select>`)}
       ${f(set4 ? '세트' : '세트 1', `<select onchange="setSet(${i},0,this.value)">${setOpts(m.sets[0])}</select>`)}
       ${!set4 ? f('세트 2', `<select onchange="setSet(${i},1,this.value)">${setOpts(m.sets[1])}</select>`) : ''}
@@ -1824,13 +1900,15 @@ function memberCard(m, i, res, asm) {
       <span>원소 마스터리<b>${fmt(fs.em)}</b></span><span>치명타 확률<b>${pc(fs.cr)}</b></span><span>치명타 피해<b>${pc(fs.cd)}</b></span>
       <span>원소 충전 효율<b>${pc(fs.er)}</b></span><span>${c.ele ? ELE[c.ele][0] + ' 피해' : '피해'}<b>${pc(fs[c.ele + '%'] || 0)}</b></span>
     </div>` : ''}
-    <div class="note">부옵션 유동 ${GC3.LIQUID}굴림 <span class="tag ${m.subsSrc === 'opt' || m.subsSrc === 'kqm' ? 'cur' : ''}">${m.subsSrc === 'opt' ? 'gcsim 최적화' : m.subsSrc === 'kqm' ? 'KQM 설정' : (m.subsSrc === 'auto' ? '자동 최적화' + (m.mainsAuto === false ? ' (주옵션은 직접 고른 것)' : '') : typeof DEFS !== 'undefined' && DEFS[m.gc] && DEFS[m.gc].subw ? '기본 배분 (KQM 평균)' : '기본 배분')}</span><br>
-      ${Object.entries(subs).filter(([, n]) => n > 0).map(([k, n]) => `${SHORT[k]} ${n}`).join(' · ')} <span style="color:var(--tx3)">(+ 10종 각 2굴림 고정)</span></div>
-    <div class="btns">
-      <button onclick="showWeapons(${i})">무기 순위</button>
-      <button onclick="showSets(${i})">성유물 순위</button>
-      <button onclick="showCons(${i})">운명의 자리</button>
-      <button onclick="showDetail(${i})" ${res ? '' : 'disabled'}>피해 내역</button>
+    <div class="foot2">
+      <div class="subs">부옵션 <span class="tag ${m.subsSrc === 'opt' || m.subsSrc === 'kqm' ? 'cur' : ''}">${m.subsSrc === 'opt' ? 'gcsim 최적화' : m.subsSrc === 'kqm' ? 'KQM 설정' : (m.subsSrc === 'auto' ? '자동 최적화' + (m.mainsAuto === false ? ' (주옵션은 직접 고른 것)' : '') : typeof DEFS !== 'undefined' && DEFS[m.gc] && DEFS[m.gc].subw ? '기본 배분 (KQM 평균)' : '기본 배분')}</span>
+        ${Object.entries(subs).filter(([, n]) => n > 0).map(([k, n]) => `${SHORT[k]} ${n}`).join(' · ')} <span style="color:var(--tx3)" title="유동 ${GC3.LIQUID}굴림 + 10종 각 2굴림 고정">(유동 ${GC3.LIQUID}굴림)</span></div>
+      <div class="btns">
+        <button onclick="showWeapons(${i})">무기 순위</button>
+        <button onclick="showSets(${i})">성유물 순위</button>
+        <button onclick="showCons(${i})">운명의 자리</button>
+        <button onclick="showDetail(${i})" ${res ? '' : 'disabled'}>피해 내역</button>
+      </div>
     </div>
     </div>
   </div>`;
