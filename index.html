@@ -1053,15 +1053,20 @@ while 1 {
     return s2;
   }
   async function optimizeMember(members, i, subsAll, sim, ign, opt) {
+    // 진행률(0~1): 부옵션 → 모래 → 성배 → 왕관 네 단계, 단계 안에서는 부옵션 반복 횟수 비율
+    const nPh = opt.mainsAuto && opt.mainsAuto(members[i]) ? 4 : 1;
+    const prog = (ph, f) => { if (opt.onProgress) opt.onProgress(i, Math.min(1, (ph + Math.min(f, 1)) / nPh)); };
     // sim(부옵션 목록, 주옵션 목록) — 주옵션을 바꾼 후보는 그 주옵션으로 잰다
-    const mk = ms => (sb, it) => optimizeSubs(ms.map((m, j) => Object.assign({}, m, { subs: sb[j] })), [i],
-      t => sim(t, ms.map(x => x.mains)), ign, Object.assign({}, opt, { maxIter: it }));
+    const mk = (ms, ph) => (sb, it) => optimizeSubs(ms.map((m, j) => Object.assign({}, m, { subs: sb[j] })), [i],
+      t => sim(t, ms.map(x => x.mains)), ign, Object.assign({}, opt, { maxIter: it,
+        onStep: (a, k) => { prog(ph || 0, k == null ? 0 : (k + 1) / (it + 1)); if (opt.onStep) opt.onStep(a, k); } }));
     let ms = members.map((m, j) => Object.assign({}, m, { subs: subsAll[j] }));
-    let best = await mk(ms)(subsAll, opt.maxIter || 8);
+    let best = await mk(ms, 0)(subsAll, opt.maxIter || 8);
     const m = ms[i];
-    if (!opt.mainsAuto || !opt.mainsAuto(m)) return { mains: m.mains, subs: best.subs[i], res: best.res, moved: best.moved[i], capped: best.capped.includes(i) };
+    if (!opt.mainsAuto || !opt.mainsAuto(m)) { prog(1, 0); return { mains: m.mains, subs: best.subs[i], res: best.res, moved: best.moved[i], capped: best.capped.includes(i) }; }
     const allowed = opt.mainOptions(m);
-    for (const slot of ['sands', 'goblet', 'circlet']) {
+    for (const [si, slot] of ['sands', 'goblet', 'circlet'].entries()) {
+      prog(si + 1, 0);
       const cur = ms[i].mains[slot], d = best.deltas[i] || {};
       const est = k => d[k] != null ? d[k] * ROLLS_PER_MAIN : null;
       const tries = [];
@@ -1077,10 +1082,11 @@ while 1 {
         const ms2 = ms.map((x, j) => j === i ? Object.assign({}, x, { mains: Object.assign({}, x.mains, { [slot]: alt }) }) : x);
         const sb = best.subs.map((x, j) => j === i ? fixCaps(ms2[i], x) : x);
         if (alt === 'er') { const e = sb[i]; const back = Math.min(e.er || 0, 8); e.er = (e.er || 0) - back; if (!e.er) delete e.er; e.cr = (e.cr || 0) + back; sb[i] = fixCaps(ms2[i], e); }
-        const r = await mk(ms2)(sb, 4);
+        const r = await mk(ms2, si + 1)(sb, 4);
         if (r.res.dps > best.res.dps * 1.002) { ms = ms2; best = r; }
       }
     }
+    prog(4, 0);
     return { mains: ms[i].mains, subs: best.subs[i], res: best.res, moved: best.moved[i], capped: best.capped.includes(i) };
   }
   async function optimizeAll(members, idxs, sim, ign, opt) {
@@ -1677,7 +1683,7 @@ async function optimizeState(st, idxs, o) {
     return { mains: snap.members.map(m => m.mains), subs: r.subs, res: r.res, moved: r.moved, capped: r.capped };
   }
   return ERFIT.optimizeAll(snap.members, idxs, sim, ign, { keys: OPT_KEYS, mainOptions: MAIN_OPTS,
-    mainsAuto: m => o.mains !== false && m.mainsAuto !== false, onStep: o.onStep });
+    mainsAuto: m => o.mains !== false && m.mainsAuto !== false, onStep: o.onStep, onProgress: o.onProgress });
 }
 /* 부옵션 원충을 상한까지(원충 시계 포함) 넣어도 원소폭발이 빠지는 캐릭터가 있고 파티에 페보니우스가 없으면,
    페보니우스 5재련을 하나 쥐여 주고 다시 맞춘다: 그 캐릭터가 서포터면 본인에게, 메인 딜러면 서포터 한 명에게.
@@ -1716,8 +1722,13 @@ function autoFit() {
     let r = null;
     try {
       await GCPOOL.init();
-      let n = 0;
-      r = await optimizeState(st, idxs, { onStep: () => { n++; fit.msg = `주옵션·부옵션 맞추는 중… (${n})`; const el = document.getElementById('fitMsg'); if (el) el.textContent = fit.msg; } });
+      // 진행률: 캐릭터마다(부옵션 → 모래 → 성배 → 왕관) 진행 비율의 평균. 줄어들지 않게 가장 높았던 값을 쓴다 (마지막 합치기 전까지 99%)
+      const pr = {}; let shown = 0;
+      const show = () => { fit.msg = `주옵션·부옵션 맞추는 중… ${shown}%`; const el = document.getElementById('fitMsg'); if (el) el.textContent = fit.msg; };
+      show();
+      r = await optimizeState(st, idxs, { onProgress: (i, f) => { pr[i] = Math.max(pr[i] || 0, f);
+        const p = Math.min(99, Math.floor(idxs.reduce((s, j) => s + (pr[j] || 0), 0) / Math.max(1, idxs.length) * 100));
+        if (p > shown) { shown = p; show(); } } });
     } catch (e) { fit.err = e.message; }
     // 그 사이 장비·파티가 바뀌었으면 버리고 다시 (render가 다시 부른다)
     if (optSig(state) === sig) {
