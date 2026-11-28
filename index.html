@@ -1286,7 +1286,11 @@ Object.assign(SET_DEF_CHAR, { klee: 'adaycarvedfromrisingwinds', yanfei: 'crimso
   ganyu: 'wandererstroupe', wriothesley: 'disenchantmentindeepshadow', qiqi: 'tenacityofthemillelith', mika: 'noblesseoblige',
   kaeya: 'emblemofseveredfate', freminet: 'paleflame', noelle: 'huskofopulentdreams',
   // 가이드 1순위로 정함 (사용자 결정, 2026-11-28)
-  dehya: 'emblemofseveredfate', xinyan: 'paleflame', shenhe: 'noblesseoblige', kaveh: 'deepwoodmemories' });
+  dehya: 'emblemofseveredfate', xinyan: 'paleflame', shenhe: 'noblesseoblige', kaveh: 'deepwoodmemories',
+  // 가이드와 다르지만 사용자 지정 (2026-11-28). 캔디스·키라라는 HP 2+2 (사이트의 HP+HP 조합과 같은 세트)
+  durin: 'noblesseoblige', chevreuse: 'songofdayspast', gaming: 'marechausseehunter', yumemizukimizuki: 'scarletproof',
+  alyosha: 'noblesseoblige', thoma: 'tenacityofthemillelith', gorou: 'huskofopulentdreams',
+  candace: ['vourukashasglow', 'tenacityofthemillelith'], kirara: ['vourukashasglow', 'tenacityofthemillelith'] });
 // 캐릭터별 기본 주옵션 (계산 전 출발점. "계산하기"를 누르면 자동 최적화가 다시 고른다).
 // 산드로네·오데트: 피해 대부분이 별 초전도(원소 피해 보너스가 붙지 않는 직접 피해)라 공격력 성배가 높다 —
 // 산드로네 116.4k(공격력) vs 111.6k(얼음 피해), 파티 전체 자동 맞춤도 둘 다 공격력 성배를 고름, 2026-11-28
@@ -1295,27 +1299,27 @@ const MAINS_DEF_CHAR = { sandrone: { goblet: 'atk%' }, odette: { goblet: 'atk%' 
   diluc: { sands: 'atk%', goblet: 'pyro%', circlet: 'cd' }, dehya: { sands: 'hp%', goblet: 'pyro%', circlet: 'cr' },
   klee: { sands: 'atk%', goblet: 'pyro%', circlet: 'cr' }, hutao: { sands: 'hp%', goblet: 'pyro%', circlet: 'cr' },
   bennett: { sands: 'er', goblet: 'hp%', circlet: 'heal' }, gaming: { sands: 'atk%', goblet: 'pyro%', circlet: 'cd' },
-  yanfei: { sands: 'atk%', goblet: 'pyro%', circlet: 'cr' }, amber: { sands: 'atk%', goblet: 'pyro%' },
+  yanfei: { sands: 'atk%', goblet: 'pyro%', circlet: 'cr' }, amber: { sands: 'atk%', goblet: 'pyro%', circlet: 'cr' },
   thoma: { sands: 'hp%', goblet: 'hp%', circlet: 'hp%' }, furina: { sands: 'er', goblet: 'hp%', circlet: 'cr' },
   vodyanitsa: { sands: 'hp%', goblet: 'hp%', circlet: 'hp%' }, sangonomiyakokomi: { sands: 'hp%', goblet: 'hp%', circlet: 'heal' },
   dahlia: { sands: 'hp%', goblet: 'hp%', circlet: 'hp%' }, candace: { sands: 'hp%', goblet: 'hp%', circlet: 'hp%' },
   vesna: { sands: 'atk%', goblet: 'atk%', circlet: 'cr' }, yumemizukimizuki: { sands: 'em', goblet: 'em', circlet: 'cr' },
   jean: { sands: 'atk%', goblet: 'atk%', circlet: 'cr' }, lanyan: { sands: 'atk%', goblet: 'atk%', circlet: 'atk%' },
-  sayu: { goblet: 'atk%', circlet: 'heal' }, jahoda: { sands: 'er', goblet: 'atk%', circlet: 'heal' },
+  sayu: { sands: 'atk%', goblet: 'atk%', circlet: 'heal' }, jahoda: { sands: 'er', goblet: 'atk%', circlet: 'heal' },
   ifa: { sands: 'em', goblet: 'em', circlet: 'em' }, faruzan: { sands: 'er', goblet: 'anemo%', circlet: 'cr' },
-  raidenshogun: { sands: 'er', goblet: 'electro%', circlet: 'cr' }, cyno: { sands: 'em', circlet: 'cd' },
+  raidenshogun: { sands: 'er', goblet: 'electro%', circlet: 'cr' }, cyno: { sands: 'em', goblet: 'atk%', circlet: 'cd' },
   yaemiko: { sands: 'atk%', goblet: 'atk%', circlet: 'cr' }, dori: { sands: 'er', goblet: 'hp%', circlet: 'heal' },
   valeriy: { sands: 'atk%', goblet: 'atk%', circlet: 'atk%' }, beidou: { sands: 'er', goblet: 'electro%', circlet: 'cd' },
   sethos: { sands: 'em', goblet: 'electro%', circlet: 'cd' }, alyosha: { sands: 'er', goblet: 'atk%', circlet: 'atk%' },
   iansan: { sands: 'atk%', goblet: 'atk%', circlet: 'atk%' }, nefer: { sands: 'em', goblet: 'em', circlet: 'cd' },
-  yaoyao: { sands: 'hp%', goblet: 'hp%' }, kaveh: { sands: 'em', circlet: 'em' },
+  yaoyao: { sands: 'hp%', goblet: 'hp%', circlet: 'heal' }, kaveh: { sands: 'em', goblet: 'em', circlet: 'em' },
   kirara: { sands: 'hp%', goblet: 'hp%', circlet: 'hp%' }, wriothesley: { sands: 'atk%', goblet: 'atk%', circlet: 'cd' },
-  escoffier: { sands: 'atk%', goblet: 'cryo%', circlet: 'cd' }, qiqi: { sands: 'atk%', goblet: 'atk%' },
+  escoffier: { sands: 'atk%', goblet: 'cryo%', circlet: 'cd' }, qiqi: { sands: 'atk%', goblet: 'atk%', circlet: 'cr' },
   layla: { sands: 'hp%', goblet: 'hp%', circlet: 'hp%' }, mika: { sands: 'er', goblet: 'hp%', circlet: 'cr' },
   charlotte: { sands: 'er', goblet: 'atk%', circlet: 'heal' }, freminet: { sands: 'atk%', goblet: 'phys%', circlet: 'cr' },
   linnea: { sands: 'def%', goblet: 'def%', circlet: 'cr' }, xilonen: { sands: 'def%', goblet: 'def%', circlet: 'def%' },
   zibai: { sands: 'def%', goblet: 'def%', circlet: 'cr' }, zhongli: { sands: 'hp%', goblet: 'hp%', circlet: 'cr' },
-  gorou: { goblet: 'def%', circlet: 'cr' }, noelle: { sands: 'def%', goblet: 'geo%', circlet: 'cr' },
+  gorou: { sands: 'er', goblet: 'def%', circlet: 'cr' }, noelle: { sands: 'def%', goblet: 'geo%', circlet: 'cr' },
   illuga: { sands: 'em', goblet: 'em', circlet: 'em' } };
 // 기본 재련 (사용자 지정): 불 여행자 별빛검 5재련
 const REFINE_DEF_CHAR = { travelerpyro: 5 };
@@ -1333,7 +1337,7 @@ function newMember(gc) {
   const scale = c.scale;
   // 기본 무기: 5성은 전용 무기(1재련, 전용 무기가 4성이면 5재련), 4성과 전용 무기 없는 5성은 페보니우스 5재련
   const sig = c.rarity === 5 && typeof SIG !== 'undefined' ? SIG[gc] : null;
-  const m = { gc, weapon: sig || WDEF[c.weapon], refine: sig && WP[sig] && WP[sig].rarity >= 5 ? 1 : 5, sets: [SET_DEF_CHAR[gc] || SET_DEF[c.ele] || 'noblesseoblige'],
+  const m = { gc, weapon: sig || WDEF[c.weapon], refine: sig && WP[sig] && WP[sig].rarity >= 5 ? 1 : 5, sets: [].concat(SET_DEF_CHAR[gc] || SET_DEF[c.ele] || 'noblesseoblige'),
     mains: { sands: scale === 'hp' ? 'hp%' : scale === 'def' ? 'def%' : scale === 'em' ? 'em' : 'atk%',
       goblet: scale === 'em' ? 'em' : (c.ele ? c.ele + '%' : 'phys%'), circlet: 'cr' },
     talents: { na: 10, skill: 10, burst: 10 }, cons: c.rarity === 4 ? 6 : 0, subs: null, subsSrc: 'default' };
@@ -1346,7 +1350,7 @@ function newMember(gc) {
     if (d.mains) m.mains = Object.assign({}, d.mains);
     m.fromDb = true;
   }
-  if (SET_DEF_CHAR[gc]) m.sets = [SET_DEF_CHAR[gc]];
+  if (SET_DEF_CHAR[gc]) m.sets = [].concat(SET_DEF_CHAR[gc]);  // 배열이면 2+2세트
   if (MAINS_DEF_CHAR[gc]) m.mains = Object.assign({}, m.mains, MAINS_DEF_CHAR[gc]);
   // 치명 왕관 첫 추정: 무기 부옵션이 치확이면 치피 왕관, 치피면 치확 왕관 (원충 맞출 때 실제로 둘 다 돌려 보고 정함)
   m.mainsAuto = true;
