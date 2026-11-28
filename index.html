@@ -1363,7 +1363,8 @@ function newMember(gc) {
 }
 function defaultState() {
   const s = {
-    members: [newMember('neuvillette'), newMember('furina'), newMember('kaedeharakazuha'), newMember('zhongli')],
+    // 처음 들어왔을 때(저장된 설정 없음)의 파티: 가장 최신 파티
+    members: [newMember('sandrone'), newMember('yaemiko'), newMember('odette'), newMember('mitya')],
     driver: 0, field: null, rotMode: 'auto', rotCustom: '',  // field: null = 메인 딜러 블록의 기본 필드 시간
     duration: 90, iters: 100, enemyLv: 100, res: 0.1, particles: true, autoER: true,
   };
